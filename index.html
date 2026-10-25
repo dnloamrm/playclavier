@@ -95,6 +95,9 @@
         height: 100vh !important;
         box-sizing: border-box !important;
       }
+      textarea {
+        caret-color: #DFD8D8 !important;
+      }
       textarea::placeholder {
         color: #4C3E3E !important;
         opacity: 1 !important;
@@ -144,6 +147,25 @@
       ["/_nuxt/a97ff0af771ea114ad33.js", "/_nuxt/475e5faa9cb04d524d9d.js", "/_nuxt/e52102afb3cb9c331891.js", "/_nuxt/238870880c42d0488215.js"].forEach(function (src) {
         var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
       });
+    })();
+  </script>
+  <script>
+    (function () {
+      if (document.documentElement.classList.contains('is-mobile')) return;
+      var ta = null;
+      function grab() {
+        ta = ta || document.querySelector('textarea');
+        if (!ta) return false;
+        if (document.activeElement !== ta) ta.focus({ preventScroll: true });
+        return true;
+      }
+      var mo = new MutationObserver(function () { if (grab()) mo.disconnect(); });
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+      grab();
+      window.addEventListener('keydown', function (e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        if (ta && document.activeElement !== ta) ta.focus({ preventScroll: true });
+      }, true);
     })();
   </script></body>
 </html>

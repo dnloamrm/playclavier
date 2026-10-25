@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Clavier</title>
+    <meta name="description" content="Clavier is an interactive experience where you improvise using your computer keyboard.">
+    <meta name="theme-color" content="#1C1717">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+    <style>
+      :root {
+        --bg: #1C1717;
+        --text: #DFD8D8;
+        --icon: #EAE6E6;
+        --fab: #5F4E4E;
+        --fab-hover: #6E5B5B;
+        --m: clamp(48px, 12vw, 144px);
+        --ml: max(112px, var(--m));
+      }
+      html, body { margin: 0; padding: 0; min-height: 100%; background-color: var(--bg); color: var(--text); }
+      body { font-family: "Cormorant Garamond", serif; }
+      main { padding: var(--m) var(--m) var(--m) var(--ml); box-sizing: border-box; }
+      p {
+        margin: 0 0 1.25em;
+        max-width: 22em;
+        font-size: 36px;
+        line-height: 1.2;
+        letter-spacing: 1px;
+        color: var(--text);
+      }
+      @media (min-width: 768px) { p { font-size: 56px; } }
+      .back {
+        position: fixed; left: 20px; bottom: 20px;
+        width: 72px; height: 72px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background-color: var(--fab);
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+      .back:hover { transform: scale(1.08); background-color: var(--fab-hover); }
+      .back svg { width: 28px; height: 28px; fill: var(--icon); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Clavier is an interactive experience where you improvise using your computer keyboard.</p>
+      <p>Designed and Coded by Danilo Amorim.</p>
+    </main>
+    <a class="back" href="/" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+    </a>
+  </body>
+</html>

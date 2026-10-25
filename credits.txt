@@ -8,3 +8,8 @@ Changes: samples trimmed, level-matched and re-encoded (Opus/MP3) for web playba
 
 Alternate bank kept in the project (not active): "Upright Piano KW" (Kawai upright),
 CC0 1.0 public domain dedication, recorded by Gonzalo and Roberto - FreePats.
+
+Music played by the keyboard: "Clair de lune" (Suite bergamasque, 1905) by Claude Debussy
+(1862-1918), public domain. Note data from the Mutopia Project MIDI (typeset by Keith OHara,
+public domain / no rights reserved) - https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1778
+Changes: merged to a single track and re-voiced with melody/accompaniment velocities.
