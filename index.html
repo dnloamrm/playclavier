@@ -684,7 +684,7 @@
             lastOn[i] = now;
           } else if (cur > 0 && now >= (hold[i] || 0)) { cur -= 1; hold[i] = now + STEP; }
           lev[i] = cur;
-          var ch = text.charAt(i), w = ws[i], m = 1 + (mMax - 1) * cur / LEVELS, sk = cur === LEVELS ? .28 : 0; /* leans sideways only at the strongest level */
+          var ch = text.charAt(i), w = ws[i], m = 1 + (mMax - 1) * cur / LEVELS, sk = 0; /* never deformed sideways: letters only stretch upward */
           if (ch !== ' ') {
             ctx.save(); ctx.translate(x + w / 2, base); ctx.transform(1, 0, -sk * m, m, 0, 0);
             ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(ch, 0, 0); ctx.restore();
