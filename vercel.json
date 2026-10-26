@@ -23,6 +23,13 @@
       }
     },
     {
+      "src": "/info(?:\\.html)?/?",
+      "status": 308,
+      "headers": {
+        "Location": "/#info"
+      }
+    },
+    {
       "handle": "filesystem"
     },
     {
