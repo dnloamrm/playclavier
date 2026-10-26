@@ -130,10 +130,10 @@
         display: contents !important;
       }
       .menu .nav-item {
-        width: 48px !important;
-        height: 48px !important;
-        min-width: 48px !important;
-        min-height: 48px !important;
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        min-height: 60px !important;
         margin: 0 !important;
         border-radius: 50% !important;
         background-color: #5F4E4E !important;
@@ -192,7 +192,7 @@
          narrow screens; left never goes under the FAB column). */
       textarea {
         --m: 40px;
-        --ml: 128px; /* 40 margin + 48 button + 40 gap */
+        --ml: 140px; /* 40 margin + 60 button + 40 gap */
         margin: var(--m) var(--m) var(--m) var(--ml) !important;
         padding: 0 !important;
         width: calc(100% - var(--ml) - var(--m)) !important;
@@ -210,7 +210,7 @@
       #info-view {
         position: fixed; inset: 0; z-index: 90;
         background-color: #1C1717; color: #DFD8D8;
-        --m: 40px; --ml: 128px;
+        --m: 40px; --ml: 140px;
         padding: var(--m) var(--m) var(--m) var(--ml); box-sizing: border-box;
         font-family: "Cormorant Garamond", serif;
         opacity: 0; visibility: hidden;
@@ -232,7 +232,7 @@
       .info-open #info-view p { opacity: 1; transform: none; }
       #info-close {
         position: fixed; left: 40px; bottom: 40px; z-index: 100;
-        width: 48px; height: 48px; border: 0; border-radius: 50%; padding: 0; cursor: pointer;
+        width: 60px; height: 60px; border: 0; border-radius: 50%; padding: 0; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         background-color: #5F4E4E;
         opacity: 0; pointer-events: none;
@@ -244,10 +244,10 @@
       .info-open #info-close { opacity: 1; pointer-events: auto; }
       .info-open .menu { opacity: 0 !important; pointer-events: none !important; }
             /* Mobile / touch layout (class set by the loader script) */
-      #more-fab { position: fixed; left: 40px; bottom: 40px; width: 48px; height: 48px; }
+      #more-fab { position: fixed; left: 40px; bottom: 40px; width: 60px; height: 60px; }
       .is-mobile {
         --gap: 12px; --edge: 20px;
-        --fab: min(48px, calc((100vw - 2 * var(--edge) - 4 * var(--gap)) / 5));
+        --fab: min(46px, calc((100vw - 2 * var(--edge) - 4 * var(--gap)) / 5));
       }
       .is-mobile #more-fab, .is-mobile #info-close {
         position: fixed; left: var(--edge); right: auto;
@@ -267,7 +267,7 @@
       .is-mobile #info-close { transition: opacity 0.45s ease, background-color 0.2s ease; }
       .is-mobile #info-close:hover { transform: none; }
       /* Desktop: same behaviour, opening upwards from the FAB (first action nearest to it) */
-      html .menu { left: 40px !important; bottom: calc(40px + 48px + 12px) !important; }
+      html .menu { left: 40px !important; bottom: calc(40px + 60px + 12px) !important; }
       html.is-mobile .menu { left: var(--edge) !important; right: auto !important; bottom: calc(var(--edge) + var(--sab, 0px) + var(--keyboard-offset, 0px) + var(--fab) + var(--gap)) !important; }
       html.is-mobile .menu .menu-wrapper { gap: var(--gap) !important; }
       html.is-mobile .menu .nav-item { width: var(--fab) !important; height: var(--fab) !important; min-width: var(--fab) !important; min-height: var(--fab) !important; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -328,18 +328,15 @@
       .is-mobile #info-view p { font-size: 40px; }
       /* Liquid-glass material while the FAB is open (Apple HIG): translucent tint, strong blur + saturation,
          specular edge highlights instead of a drop shadow. Closed state keeps the solid #5F4E4E buttons. */
-      html.fab-open #fab-backdrop {
-        background:
-          radial-gradient(120% 80% at 0% 100%, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 60%),
-          linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)),
-          rgba(60, 48, 48, .30);
-        -webkit-backdrop-filter: blur(32px) saturate(190%); backdrop-filter: blur(32px) saturate(190%);
-        box-shadow: inset 0 1px 1px rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .05);
+      /* no glass / blur: the backdrop is an invisible click-to-close layer */
+      html #fab-backdrop, html.fab-open #fab-backdrop {
+        background: transparent !important; box-shadow: none !important;
+        -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
       }
-      /* Button model borrowed from symphosizer.wearecollins.com: black square, 1px white-ish border, 4px radius,
-         0.2s colour transition (kept at 48px / 12px gaps). Replaces the round glass buttons. */
+      /* Button model borrowed from symphosizer.wearecollins.com: transparent square, 1px border, 4px radius,
+         60px (46px on mobile), 0.2s colour transition, 12px gaps. */
       html.fab-open.fab-open .menu .nav-item, html .menu .nav-item, html #more-fab, html #info-close {
-        background-color: #000 !important;
+        background-color: transparent !important;
         border: 1px solid #EAE6E6 !important;
         border-radius: 4px !important;
         box-shadow: none !important;
@@ -348,8 +345,8 @@
         transition-property: opacity, transform, background-color, color !important;
       }
       html.fab-open.fab-open .menu .nav-item { transition-duration: .22s, .45s, .2s, .2s !important; }
-      html.fab-open.fab-open .menu .nav-item:hover, html #more-fab:hover, html #info-close:hover { background-color: #2B2424 !important; }
-      html.fab-open.fab-open .menu .nav-item:active, html #more-fab:active, html #info-close:active { background-color: #3A3030 !important; }
+      html.fab-open.fab-open .menu .nav-item:hover, html #more-fab:hover, html #info-close:hover { background-color: rgba(234, 230, 230, .14) !important; }
+      html.fab-open.fab-open .menu .nav-item:active, html #more-fab:active, html #info-close:active { background-color: rgba(234, 230, 230, .24) !important; }
       html .menu .nav-item svg path, html #more-fab svg path, html #info-close svg path { stroke: #EAE6E6 !important; }
     </style>
   </head>
