@@ -655,14 +655,23 @@
          jump straight to that level; it only drops one level at a time, after holding each level for STEP ms, so the
          fast flutter of the music can never shake it. Letters only grow upward from a fixed baseline: nothing moves
          sideways, and the tallest level stays inside the 40px grid. */
+      /* Intensity layer (on top of the stepped letters): a smooth envelope of the overall loudness. Below START nothing
+         happens; above it the whole word leans to the right and grows from the centre of the page, more and more as the
+         sound gets stronger, until it bursts out of the screen. */
+      var inten = 0, E = 0, START = .5, KMAX = 8, LEAN = .6;   /* E: leaky integral of the sound's energy (louder and denser typing builds it up) */
       var lev = [], peak = [], hold = [], slow = [], lastOn = [], STEP = 40, PEAK_HOLD = 90, RISE = 4, LEVELS = 12;
       function draw(now) {
         raf = requestAnimationFrame(draw);
-        analyse();
+        var rms = analyse();
         var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
+        E = E * Math.exp(-dt / .6) + rms * rms * dt;
+        var it = Math.min(1, E / .006 * gain);   /* 1 = sustained loudness of about 0.1 rms (fast, dense typing) */
+        inten += (it - inten) * (1 - Math.exp(-dt / (it > inten ? .1 : .45)));   /* smooth both ways */
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
         var text = input.value.slice(0, 15), n = text.length;
         if (!n) { drawPlaceholder(now); return; }
+        var kk = Math.max(0, Math.min(1, (inten - START) / (1 - START))); kk = kk * kk * (3 - 2 * kk);   /* smoothstep from the start point */
+        ctx.save(); ctx.translate(W / 2, H / 2); ctx.transform(1, 0, -LEAN * kk, 1, 0, 0); ctx.scale(1 + (KMAX - 1) * kk, 1 + (KMAX - 1) * kk); ctx.translate(-W / 2, -H / 2);
         var i, sum100 = 0;
         for (i = 0; i < n; i++) sum100 += adv(text.charAt(i));
         var gridW = W - 80, gridH = H - 80;
@@ -697,6 +706,7 @@
         cum[n] = x;
         var sel = Math.max(0, Math.min(n, input.selectionStart == null ? n : input.selectionStart));
         if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(cum[sel] + (sel === n ? S0 * .03 : -S0 * .01), base - capIdle, Math.max(2, S0 * .012), capIdle); }
+        ctx.restore();
       }
       if (location.hash === '#kinetic') setTimeout(function () { openK(false); }, 0);
     })();
