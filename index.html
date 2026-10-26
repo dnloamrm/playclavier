@@ -262,49 +262,23 @@
       .kin-open #kin-view { opacity: 1; visibility: visible; transition: opacity .45s ease, visibility 0s; }
       #kin-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
       #kin-input { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; font-size: 16px; }
-      #kin-bar, #kin-slider, #kin-close { opacity: 0; pointer-events: none; transition: opacity .45s ease; }
-      .kin-open #kin-bar, .kin-open #kin-slider, .kin-open #kin-close { opacity: 1; pointer-events: auto; }
-      #kin-bar {
-        position: fixed; z-index: 100; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none;
-        bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
-      }
-      #kin-bar button, #kin-close {
+      #kin-close { opacity: 0; pointer-events: none; transition: opacity .45s ease; }
+      .kin-open #kin-close { opacity: 1; pointer-events: auto; }
+      #kin-close {
+        position: fixed; z-index: 100; left: var(--edge); bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
         width: var(--btn); height: var(--btn); padding: 0; margin: 0; box-sizing: border-box; cursor: pointer;
-        border: 1px solid #EAE6E6; background: transparent; display: flex; align-items: center; justify-content: center;
+        border: 1px solid #EAE6E6; border-radius: 4px; background: transparent; display: flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation;
       }
-      #kin-bar button, #kin-close { pointer-events: none; }
-      .kin-open #kin-bar button, .kin-open #kin-close { pointer-events: auto; }
-      #kin-bar button:first-child { border-radius: 4px 0 0 4px; }
-      #kin-bar button:last-child { border-radius: 0 4px 4px 0; }
-      #kin-bar button:not(:last-child) { border-right-width: .25px; }
-      #kin-bar button:not(:first-child) { border-left-width: .25px; }
-      #kin-bar button svg, #kin-close svg { width: 20px; height: 20px; fill: none; opacity: .45; transition: opacity .2s ease; }
-      #kin-bar button svg, #kin-close svg { opacity: 1; }
-      #kin-bar button svg path, #kin-close svg path { fill: none; stroke: #EAE6E6; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      #kin-close { position: fixed; z-index: 100; left: var(--edge); border-radius: 4px; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px)); }
-      #kin-slider {
-        position: fixed; z-index: 100; left: 50%; box-sizing: border-box;
-        width: min(446px, calc(100vw - 2 * var(--edge))); height: var(--btn); margin-left: calc(min(446px, calc(100vw - 2 * var(--edge))) / -2);
-        bottom: calc(var(--dock-b) + var(--btn) + 12px + var(--sab, 0px) + var(--keyboard-offset, 0px));
-        border: 1px solid #EAE6E6; border-radius: 4px; display: flex; align-items: center; padding: 0 20px;
-      }
-      #kin-sens { -webkit-appearance: none; appearance: none; width: 100%; height: 24px; background: transparent; margin: 0; cursor: pointer; }
-      #kin-sens::-webkit-slider-runnable-track { height: 1px; background: #EAE6E6; }
-      #kin-sens::-moz-range-track { height: 1px; background: #EAE6E6; }
-      #kin-sens::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; margin-top: -5.5px; border-radius: 50%; background: #EAE6E6; border: 0; }
-      #kin-sens::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #EAE6E6; border: 0; }
+      #kin-close svg { width: 20px; height: 20px; fill: none; }
+      #kin-close svg path { fill: none; stroke: #EAE6E6; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .kin-open .menu { opacity: 0 !important; pointer-events: none !important; }
       .kin-open .menu .menu-wrapper { pointer-events: none !important; }
     </style>
   </head>
   <body>
     <div id="__nuxt"><style>#nuxt-loading{visibility:hidden;opacity:0;position:absolute;left:0;right:0;top:0;bottom:0;display:flex;justify-content:center;align-items:center;flex-direction:column;animation:nuxtLoadingIn 10s ease;-webkit-animation:nuxtLoadingIn 10s ease;animation-fill-mode:forwards;overflow:hidden}@keyframes nuxtLoadingIn{0%{visibility:hidden;opacity:0}20%{visibility:visible;opacity:0}100%{visibility:visible;opacity:1}}@-webkit-keyframes nuxtLoadingIn{0%{visibility:hidden;opacity:0}20%{visibility:visible;opacity:0}100%{visibility:visible;opacity:1}}#nuxt-loading>div,#nuxt-loading>div:after{border-radius:50%;width:5rem;height:5rem}#nuxt-loading>div{font-size:10px;position:relative;text-indent:-9999em;border:.5rem solid #f5f5f5;border-left:.5rem solid #000;-webkit-transform:translateZ(0);-ms-transform:translateZ(0);transform:translateZ(0);-webkit-animation:nuxtLoading 1.1s infinite linear;animation:nuxtLoading 1.1s infinite linear}#nuxt-loading.error>div{border-left:.5rem solid #ff4500;animation-duration:5s}@-webkit-keyframes nuxtLoading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes nuxtLoading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}</style><script>window.addEventListener("error",function(){var e=document.getElementById("nuxt-loading");e&&(e.className+=" error")})</script><div id="nuxt-loading" aria-live="polite" role="status"><div>Loading...</div></div></div>
-  <section id="kin-view" aria-label="Kinetic"><canvas id="kin-canvas"></canvas><input id="kin-input" maxlength="15" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Text" value="CLAVIER"></section>
-  <div id="kin-slider"><input id="kin-sens" type="range" min="0" max="100" value="50" aria-label="Sensitivity"></div>
-  <div id="kin-bar">
-    <button id="kin-var" type="button" aria-label="Wave variation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-6 5-6 7.5 0s5 6 7.5 0c1.2-2.9 2.5-4.3 5-4.5"/></svg></button>
-  </div>
+  <section id="kin-view" aria-label="Kinetic"><canvas id="kin-canvas"></canvas><input id="kin-input" maxlength="15" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Text" placeholder="Type to play..."></section>
   <button id="kin-close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L12 12M12 12L6 18M12 12L6 6M12 12L18 18"/></svg></button>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim in pair programming with Claude.</p></div></section>
   <button id="info-close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L12 12M12 12L6 18M12 12L6 6M12 12L18 18"/></svg></button>
@@ -557,13 +531,12 @@
     (function () {
       var root = document.documentElement;
       var view = document.getElementById('kin-view'), cv = document.getElementById('kin-canvas'), ctx = cv.getContext('2d');
-      var input = document.getElementById('kin-input'), sens = document.getElementById('kin-sens');
-      var bVar = document.getElementById('kin-var');
+      var input = document.getElementById('kin-input');
       var FONT = '"Cormorant Garamond", serif', MAXPX = 504;
       /* hy: how tall a letter grows, hx: how much it widens, sk: slant, k: phase spread between letters */
-      var VARS = [{ k: .9, amp: .05, sp: 1, hy: 5.2, hx: 1.3, sk: .45 }, { k: .35, amp: .04, sp: .7, hy: 3.2, hx: 2.4, sk: .75 }, { k: 0, amp: .03, sp: 1.3, hy: 7.5, hx: .7, sk: .2 }];
-      var open = false, raf = 0, last = 0, level = 0, imp = 0, phase = 0, pitch = .5, gain = 1, vi = 0;
-      var ge = [], kick = [], S = 0, prevLen = 0, w100 = {}, dpr = 1, W = 0, H = 0, tbuf = null, fbuf = null, lastGood = 0;
+      var V = { k: .9, amp: .05, sp: 1, hy: 5.2, hx: 1.3, sk: .45 };
+      var open = false, raf = 0, last = 0, level = 0, phase = 0, pitch = .5, gain = 1;
+      var ge = [], w100 = {}, dpr = 1, W = 0, H = 0, tbuf = null, fbuf = null, lastGood = 0;
       function isMobile() { return root.classList.contains('is-mobile'); }
       /* transparent AudioContext start: resume on the first real gesture, no prompts of any kind */
       ['pointerdown', 'keydown', 'touchend'].forEach(function (n) {
@@ -589,7 +562,7 @@
         if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         root.classList.add('kin-open');
         if (push) history.pushState({ kin: 1 }, '', '#kinetic');
-        prevLen = input.value.length; S = 0; resize(); input.focus({ preventScroll: true }); try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
+        resize(); input.focus({ preventScroll: true }); try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
         if (document.fonts && document.fonts.load) document.fonts.load('400 100px "Cormorant Garamond"').then(function () { w100 = {}; capR = 0; });
         last = 0; raf = requestAnimationFrame(draw);
       }
@@ -611,33 +584,22 @@
       if (window.ResizeObserver) new ResizeObserver(function () { if (open) resize(); }).observe(view);
       view.addEventListener('pointerdown', function () { input.focus({ preventScroll: true }); });
       /* keep focus in the hidden input when pressing toolbar buttons */
-      document.getElementById('kin-bar').addEventListener('mousedown', function (e) { e.preventDefault(); });
 
       /* typing -> piano engine */
       function forward(key) {
         var ta = document.querySelector('textarea'); if (!ta) return;
         var kc = key === 'Backspace' ? 8 : (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0);
         ta.dispatchEvent(new KeyboardEvent('keydown', { key: key, keyCode: kc, which: kc, bubbles: true, cancelable: true }));
-        imp = Math.max(imp, .9);
       }
       input.addEventListener('keydown', function (e) {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
         if (e.key && e.key !== 'Unidentified' && e.keyCode !== 229 && (e.key.length === 1 || e.key === 'Backspace')) { lastGood = Date.now(); forward(e.key); }
-      });
-      input.addEventListener('input', function () {
-        var n = input.value.length;
-        if (n > prevLen) kick[n - 1] = 1;
-        prevLen = n;
       });
       input.addEventListener('input', function (e) {   /* virtual keyboards: key is "Unidentified" on keydown */
         if (!e.isTrusted || Date.now() - lastGood < 120) return;
         if (e.inputType === 'insertText' && e.data && e.data.length === 1) forward(e.data);
         else if (e.inputType === 'deleteContentBackward') forward('Backspace');
       });
-
-      /* controls */
-      sens.addEventListener('input', function () { gain = Math.pow(3, (sens.value - 50) / 50); });
-      bVar.addEventListener('click', function () { vi = (vi + 1) % VARS.length; imp = 1; });
 
       function analyse() {
         var an = window.__clavierAnalyser; if (!an) return 0;
@@ -659,30 +621,36 @@
         for (var k = a; k <= z; k++) if (fbuf[k] > m) m = fbuf[k];
         return Math.max(0, m / 255 - .12) * 1.5;
       }
+      /* empty field: same placeholder as the Home, with a blinking caret at its start */
+      function drawPlaceholder(now) {
+        var t = 'Type to play...'; ctx.font = '400 100px ' + FONT;
+        var s = ctx.measureText(t).width, S0 = Math.min(MAXPX, W * (isMobile() ? .62 : .43) * 100 / Math.max(1, s));
+        var capIdle = S0 * capRatio(), base = H * .56, x = (W - s * S0 / 100) / 2;
+        ctx.fillStyle = '#4C3E3E'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(t, x, base);
+        if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(x - S0 * .04, base - capIdle, Math.max(2, S0 * .012), capIdle); }
+      }
       function draw(now) {
         raf = requestAnimationFrame(draw);
         var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
         var rms = analyse();
-        imp *= Math.exp(-dt / .22);
-        var target = Math.min(1, (rms * 5 + imp * .55) * gain);
+        var target = Math.min(1, rms * 5 * gain); /* only the audio drives the motion */
         level += (target - level) * (target > level ? .5 : .07);
-        var V = VARS[vi];
         phase += dt * V.sp * (1.2 + 7 * pitch * level + 3 * level);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-        var text = input.value.slice(0, 15), n = text.length; if (!n) return;
-        if (n !== prevLen) { prevLen = n; }
+        var text = input.value.slice(0, 15), n = text.length;
+        if (!n) { drawPlaceholder(now); return; }
         var i, g = new Array(n), sum100 = 0;
         for (i = 0; i < n; i++) {
           var tgt = Math.min(1, bandEnergy(i, n) * gain), cur = ge[i] || 0;
           cur += (tgt - cur) * (tgt > cur ? .55 : .05);
-          kick[i] = (kick[i] || 0) * Math.exp(-dt / .35); ge[i] = cur;
-          g[i] = Math.min(1, cur * .8 + level * .5 + kick[i] * .9);
+          ge[i] = cur;
+          g[i] = Math.min(1, cur * .8 + level * .5);
           sum100 += adv(text.charAt(i));
         }
         /* Resting size: the word is small and quiet; sound makes each letter shoot up from a shared baseline,
            narrow and slanted, and fall back along the note's decay. Overflow past the edges is part of the look. */
         var S0 = Math.min(MAXPX, W * (isMobile() ? .62 : .43) * 100 / Math.max(.01, sum100));
-        S = S0;
         var capR = capRatio(), base = H * .56, capIdle = S0 * capR, x, total = 0, ws = new Array(n), hxs = new Array(n), hys = new Array(n), sks = new Array(n);
         var maxHy = Math.max(1, (base - 36) / capIdle);
         for (i = 0; i < n; i++) {
@@ -693,6 +661,7 @@
           ws[i] = adv(text.charAt(i)) * S0 / 100 * hxs[i]; total += ws[i];
         }
         x = (W - total) / 2;
+        var cum = new Array(n + 1);
         ctx.fillStyle = '#DFD8D8'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
         for (i = 0; i < n; i++) {
           var ch = text.charAt(i), w = ws[i];
@@ -702,9 +671,11 @@
             ctx.transform(hxs[i], 0, -sks[i] * hys[i], hys[i], 0, 0);
             ctx.font = wt + ' ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(ch, 0, 0); ctx.restore();
           }
-          x += w;
+          cum[i] = x; x += w;
         }
-        if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(x + S0 * .03, base - capIdle, Math.max(2, S0 * .012), capIdle); }
+        cum[n] = x;
+        var sel = Math.max(0, Math.min(n, input.selectionStart == null ? n : input.selectionStart));
+        if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(cum[sel] + (sel === n ? S0 * .03 : -S0 * .01), base - capIdle, Math.max(2, S0 * .012), capIdle); }
       }
       if (location.hash === '#kinetic') setTimeout(function () { openK(false); }, 0);
     })();
