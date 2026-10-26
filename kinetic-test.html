@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Kinetic type — test lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baskervville:ital,wght@0,400..700;1,400..700&display=block">
+<style>
+  :root { --bg:#1C1717; --fg:#DFD8D8; --dim:#8F8282; --line:#3A3030; --skew:#D14BE0; --stretch:#62D26F; --btn:#5F4E4E; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--fg); font-family:"Baskervville",serif; }
+  body { min-height:100dvh; padding:24px; display:grid; grid-template-rows:auto 1fr auto; gap:20px; }
+  h1 { margin:0; font-size:22px; font-weight:400; letter-spacing:.5px; }
+  h1 small { color:var(--dim); font-size:14px; margin-left:10px; }
+  main { display:grid; grid-template-columns:minmax(300px,420px) 1fr; gap:24px; min-height:0; }
+  @media (max-width:820px){ main{ grid-template-columns:1fr; } }
+  .panel { border:1px solid var(--line); border-radius:8px; padding:16px; }
+  .panel h2 { margin:0 0 10px; font-size:13px; font-weight:400; letter-spacing:1.5px; text-transform:uppercase; color:var(--dim); }
+  canvas#chart { width:100%; aspect-ratio:1/1; display:block; }
+  .legend { display:flex; gap:18px; font-size:13px; margin-top:8px; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  #stage { position:relative; overflow:hidden; border:1px solid var(--line); border-radius:8px; min-height:340px; height:100%; background:var(--bg); }
+  #burst { position:absolute; left:50%; top:66%; width:0; height:0; }
+  #glyph { position:absolute; left:0; top:0; transform-origin:50% 100%; font-size:clamp(56px,10vh,130px); line-height:1; white-space:pre; transform:translate(-50%,-50%); }
+  #hud { position:absolute; left:14px; bottom:12px; font-size:13px; color:var(--dim); line-height:1.5; pointer-events:none; }
+  #hud b { color:var(--fg); font-weight:400; }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px 24px; }
+  label { display:grid; grid-template-columns:1fr auto; gap:4px 10px; font-size:14px; align-items:center; }
+  label span.v { color:var(--dim); font-variant-numeric:tabular-nums; }
+  label input[type=range] { grid-column:1/3; width:100%; accent-color:#EAE6E6; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+  button, input[type=text] { font:inherit; font-size:15px; color:var(--fg); background:var(--btn); border:0; border-radius:999px; padding:9px 18px; cursor:pointer; }
+  input[type=text] { background:transparent; border:1px solid var(--line); border-radius:8px; width:200px; cursor:text; }
+  button:hover { background:#6E5B5B; }
+  button.on { background:#8a7272; }
+  footer { font-size:13px; color:var(--dim); line-height:1.5; max-width:880px; }
+</style>
+</head>
+<body>
+<h1>Kinetic type <small>test lab · not linked from the app</small></h1>
+<main>
+  <section class="panel">
+    <h2>Response curves</h2>
+    <canvas id="chart" width="800" height="800"></canvas>
+    <div class="legend"><span><i style="background:var(--skew)"></i>Skew (starts late, then fast, capped)</span><span><i style="background:var(--stretch)"></i>Vertical stretch (starts slow, accelerates)</span></div>
+  </section>
+  <section id="stage" aria-label="Preview"><div id="burst"><div id="glyph">A</div></div><div id="hud"></div></section>
+</main>
+<section class="panel">
+  <div class="row">
+    <label style="grid-template-columns:auto;"><span>Text (up to 15)</span></label>
+    <input id="text" type="text" maxlength="15" value="A" spellcheck="false" aria-label="Text">
+    <button id="hit">Hit a note</button>
+    <button id="sweep">Sweep 0 → 10 → 0</button>
+    <button id="piano">Type to play (own synth)</button>
+  </div>
+  <div class="controls">
+    <label>Intensity (variable parameter)<span class="v" id="vx"></span><input id="x" type="range" min="0" max="10" step="0.01" value="0"></label>
+    <label>Skew starts at<span class="v" id="vstart"></span><input id="start" type="range" min="0" max="9.5" step="0.1" value="6.5"></label>
+    <label>Skew ceiling, "Goldilocks" (deg)<span class="v" id="vgold"></span><input id="gold" type="range" min="10" max="60" step="1" value="40"></label>
+    <label>Vertical stretch max (×)<span class="v" id="vv"></span><input id="vmax" type="range" min="1" max="12" step="0.1" value="6"></label>
+    <label>Stretch curve exponent<span class="v" id="vp"></span><input id="p" type="range" min="1" max="5" step="0.1" value="2.4"></label>
+    <label>Burst starts at<span class="v" id="vb"></span><input id="b" type="range" min="5" max="10" step="0.1" value="8.2"></label>
+    <label>Burst max (×, whole word)<span class="v" id="vk"></span><input id="k" type="range" min="2" max="60" step="1" value="40"></label>
+    <label>Sensitivity (synth only)<span class="v" id="vs"></span><input id="sens" type="range" min="0.3" max="3" step="0.05" value="1"></label>
+  </div>
+</section>
+<footer>
+  Reading of the two studies: one input (the variable parameter, 0–10) feeds two different curves. The <b>magenta skew</b> stays at zero until a start point,
+  then rises fast and is capped inside the "Goldilocks zone" (never a back slant, never "too slanted"). The <b>green vertical stretch</b> is convex: it stays low
+  and then accelerates. Past the burst point the whole word scales up from its centre until it overflows the screen. Move the slider, hit a note, sweep, or type
+  to drive it with a small built-in synth (the real piano is not loaded on this page).
+</footer>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var P = { start: 6.5, gold: 40, vmax: 6, p: 2.4, b: 8.2, k: 40, sens: 1 };
+  var x = 0, manual = 0, mode = 'manual', lastApply = '';           // mode: manual | hit | sweep | piano
+  var glyph = $('glyph'), burst = $('burst'), hud = $('hud'), chart = $('chart'), cx = chart.getContext('2d');
+
+  /* ---- the two transfer functions (input u in 0..1) ---- */
+  function skewOut(u) {                                   // 0 until START, then ease-out (fast, then flat); degrees, never negative, capped at the ceiling
+    var s0 = P.start / 10; if (u <= s0) return 0;
+    var t = (u - s0) / (1 - s0); return P.gold * (1 - Math.pow(1 - t, 3));
+  }
+  function stretchOut(u) { return 1 + (P.vmax - 1) * Math.pow(u, P.p); }   // convex: slow start, accelerates
+  function burstOut(u) {                                  // uniform growth of the whole word, from the centre, after BURST
+    var b0 = P.b / 10; if (u <= b0) return 1;
+    var t = Math.min(1, (u - b0) / (1 - b0)); t = t * t * (3 - 2 * t);
+    return Math.pow(P.k, t);
+  }
+
+  /* ---- chart ---- */
+  function drawChart() {
+    var W = chart.width, H = chart.height, m = 60, w = W - m * 1.4, h = H - m * 1.6;
+    cx.clearRect(0, 0, W, H); cx.font = '22px Baskervville, serif'; cx.lineWidth = 1;
+    cx.strokeStyle = '#3A3030'; cx.fillStyle = '#8F8282'; cx.textAlign = 'center';
+    for (var i = 0; i <= 10; i += 2) {
+      var gx = m + w * i / 10, gy = m * .6 + h - h * i / 10;
+      cx.beginPath(); cx.moveTo(gx, m * .6); cx.lineTo(gx, m * .6 + h); cx.stroke();
+      cx.beginPath(); cx.moveTo(m, gy); cx.lineTo(m + w, gy); cx.stroke();
+      cx.fillText(i, gx, m * .6 + h + 28); cx.textAlign = 'right'; cx.fillText(i, m - 10, gy + 7); cx.textAlign = 'center';
+    }
+    cx.fillText('VARIABLE PARAMETER', m + w / 2, H - 8);
+    cx.save(); cx.translate(18, m * .6 + h / 2); cx.rotate(-Math.PI / 2); cx.fillText('OUTPUT (normalised)', 0, 0); cx.restore();
+    function curve(fn, color) {
+      cx.strokeStyle = color; cx.lineWidth = 3; cx.beginPath();
+      for (var s = 0; s <= 200; s++) { var u = s / 200, yy = fn(u), px = m + w * u, py = m * .6 + h - h * yy; s ? cx.lineTo(px, py) : cx.moveTo(px, py); }
+      cx.stroke(); cx.lineWidth = 1;
+    }
+    curve(function (u) { return skewOut(u) / P.gold; }, '#D14BE0');
+    curve(function (u) { return (stretchOut(u) - 1) / (P.vmax - 1 || 1); }, '#62D26F');
+    var u = Math.min(1, x / 10);
+    [[skewOut(u) / P.gold, '#D14BE0'], [(stretchOut(u) - 1) / (P.vmax - 1 || 1), '#62D26F']].forEach(function (d) {
+      cx.fillStyle = d[1]; cx.beginPath(); cx.arc(m + w * u, m * .6 + h - h * d[0], 9, 0, 6.283); cx.fill();
+    });
+    cx.strokeStyle = '#EAE6E6'; cx.setLineDash([6, 6]); cx.beginPath(); cx.moveTo(m + w * u, m * .6); cx.lineTo(m + w * u, m * .6 + h); cx.stroke(); cx.setLineDash([]);
+  }
+
+  /* ---- preview ---- */
+  function apply() {
+    var u = Math.max(0, Math.min(1, x / 10)), sk = skewOut(u), st = stretchOut(u), bu = burstOut(u);
+    var sig = [x.toFixed(3), P.start, P.gold, P.vmax, P.p, P.b, P.k].join('|'); if (sig === lastApply) return; lastApply = sig;   // repaint only on change
+    glyph.style.transform = 'translate(-50%,-50%) scaleY(' + st.toFixed(3) + ')';            // vertical stretch, anchored on the baseline
+    burst.style.transform = 'skewX(' + (-sk).toFixed(2) + 'deg) scale(' + bu.toFixed(3) + ')';   // lean right + growth from the centre
+    burst.style.transformOrigin = '0 0';
+    hud.innerHTML = 'parameter <b>' + x.toFixed(2) + '</b> · skew <b>' + sk.toFixed(1) + '°</b> · vertical stretch <b>×' + st.toFixed(2) + '</b> · burst <b>×' + bu.toFixed(1) + '</b>';
+    $('vx').textContent = x.toFixed(2); drawChart();
+  }
+  function setText() { glyph.textContent = $('text').value || ' '; lastApply = ''; }
+  $('text').addEventListener('input', setText);
+
+  /* ---- sliders ---- */
+  var map = { start: 'vstart', gold: 'vgold', vmax: 'vv', p: 'vp', b: 'vb', k: 'vk', sens: 'vs' };
+  Object.keys(map).forEach(function (key) {
+    var el = $(key); function upd() { P[key] = parseFloat(el.value); $(map[key]).textContent = el.value; apply(); }
+    el.addEventListener('input', upd); upd();
+  });
+  $('x').addEventListener('input', function () { mode = 'manual'; manual = x = parseFloat(this.value); setModes(); apply(); });
+
+  /* ---- modes ---- */
+  var t0 = 0, hitFrom = 0;
+  function setModes() { $('piano').classList.toggle('on', mode === 'piano'); }
+  $('hit').addEventListener('click', function () { mode = 'hit'; t0 = performance.now(); hitFrom = x; setModes(); });
+  $('sweep').addEventListener('click', function () { mode = 'sweep'; t0 = performance.now(); setModes(); });
+  $('piano').addEventListener('click', function () { mode = mode === 'piano' ? 'manual' : 'piano'; if (mode === 'piano') startAudio(); setModes(); $('text').blur(); });
+
+  /* ---- tiny built-in synth, only to drive the intensity from real sound ---- */
+  var ac = null, an = null, tb = null, E = 0, last = 0, heldUntilFrame = 0;
+  function startAudio() {
+    if (!ac) {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      an = ac.createAnalyser(); an.fftSize = 1024; an.connect(ac.destination); tb = new Float32Array(an.fftSize);
+    }
+    if (ac.state === 'suspended') ac.resume();
+  }
+  function note(key) {
+    if (!ac) return; var f = 130.81 * Math.pow(2, ((key.toLowerCase().charCodeAt(0) * 7) % 36) / 12), t = ac.currentTime;
+    var g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0008, t + 1.6); g.connect(an);
+    [[1, 'triangle', 1], [2, 'sine', .35], [3, 'sine', .15]].forEach(function (p) {
+      var o = ac.createOscillator(); o.type = p[1]; o.frequency.value = f * p[0]; var gg = ac.createGain(); gg.gain.value = p[2]; o.connect(gg); gg.connect(g); o.start(t); o.stop(t + 1.7);
+    });
+  }
+  window.addEventListener('keydown', function (e) {
+    if (mode !== 'piano' || e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.target === $('x')) return;
+    if (e.target.tagName === 'INPUT' && e.target.type === 'text') return; startAudio(); note(e.key);
+    if (e.key !== ' ') { var t = $('text'); if (t.value.length < 15) { t.value += e.key; setText(); } }
+  });
+  window.addEventListener('keydown', function (e) { if (mode === 'piano' && e.key === 'Backspace' && document.activeElement !== $('text')) { var t = $('text'); t.value = t.value.slice(0, -1); setText(); } });
+
+  /* ---- loop ---- */
+  function frame(now) {
+    requestAnimationFrame(frame);
+    var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
+    if (mode === 'hit') {                                    // hard: 0.12 s straight up to 9, then a straight fall in 0.9 s
+      var s = (now - t0) / 1000, up = .12, down = .9;
+      x = s < up ? hitFrom + (9 - hitFrom) * (s / up) : Math.max(manual, 9 * (1 - (s - up) / down)); if (s > up + down) { mode = 'manual'; x = manual; }
+    } else if (mode === 'sweep') {
+      var s2 = (now - t0) / 8000; x = s2 < .5 ? 20 * s2 : 20 * (1 - s2); if (s2 >= 1) { mode = 'manual'; x = manual; }
+    } else if (mode === 'piano' && an) {
+      an.getFloatTimeDomainData(tb); var sum = 0; for (var i = 0; i < tb.length; i++) sum += tb[i] * tb[i];
+      E = E * Math.exp(-dt / .25) + (sum / tb.length) * dt; x += (Math.min(10, E / .0025 * P.sens * 10) - x) * (1 - Math.exp(-dt / (E / .0025 * P.sens * 10 > x ? .1 : .16)));
+    }
+    if (mode !== 'manual') $('x').value = x.toFixed(2);
+    apply();
+  }
+  setText(); setModes(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
