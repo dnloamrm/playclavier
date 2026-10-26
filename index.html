@@ -1,12 +1,11 @@
 <!doctype html>
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head>
-    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Jam your solo"><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#1C1717"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Jam your solo"><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=block">
+    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Jam your solo"><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#1C1717"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Jam your solo"><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baskervville:ital,wght@0,400..700;1,400..700&display=block">
     <!-- Piano samples: Salamander Grand Piano (Yamaha C5) by Alexander Holm, CC BY 3.0 - see /credits.txt -->
     <link rel="author" href="/credits.txt">
     <script>
-      /* Audio taps. Every connection to the context destination also feeds an AnalyserNode (drives the
-         Kinetic mode). On mobile speakers the signal first goes through a master chain
+      /* Mobile speakers: the signal first goes through a master chain
          lowpass 3800 -> compressor -> gain(-4 dB) and uses the softer-envelope config. */
       (function () {
         var ua = navigator.userAgent || '';
@@ -15,13 +14,12 @@
           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
         var root = document.documentElement;
         if (mobile) { root.classList.add('is-mobile'); window.__audioConfig = 'audio/config.mobile.js'; }
-        var chains = new WeakMap(), taps = new WeakMap(), rawConnect = AudioNode.prototype.connect;
+        if (!mobile) return;
+        var chains = new WeakMap(), rawConnect = AudioNode.prototype.connect;
         AudioNode.prototype.connect = function (dest) {
           if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {
-            var ctx = dest.context, an = taps.get(ctx);
-            if (!an) { an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.3; taps.set(ctx, an); window.__clavierAnalyser = an; }
-            rawConnect.call(this, an);
-            if (mobile) {
+            var ctx = dest.context;
+            {
               var ch = chains.get(ctx);
               if (!ch) {
                 var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.7;
@@ -122,6 +120,12 @@
         -webkit-tap-highlight-color: transparent; touch-action: manipulation;
         transition: opacity .45s ease, background-color .2s ease, transform .2s ease;
       }
+      /* no shadows of any kind on the FAB or its buttons (box, drop, text, focus ring) in any state */
+      #more-fab, #more-fab:hover, #more-fab:active, #more-fab:focus, #more-fab:focus-visible, #more-fab svg,
+      .menu .nav-item, .menu .nav-item:hover, .menu .nav-item:active, .menu .nav-item:focus, .menu .nav-item:focus-visible, .menu .nav-item svg {
+        box-shadow: none !important; filter: none !important; text-shadow: none !important; outline: none !important;
+        -webkit-appearance: none; appearance: none;
+      }
       #more-fab:hover { background-color: #6E5B5B; }
       #more-fab:active { transform: scale(.92); }
       #more-fab svg { width: 20px; height: 20px; fill: none; transition: transform .4s cubic-bezier(.34,1.56,.64,1); }
@@ -129,9 +133,9 @@
       #more-fab .ic-dots, #more-fab .ic-x { transition: opacity .2s ease; transform-origin: 12px 12px; }
       #more-fab .ic-x { opacity: 0; }
       /* the dots turn into an X while the menu is open and on every page/mode that the FAB closes */
-      .fab-open #more-fab svg, .kin-open #more-fab svg, .info-open #more-fab svg, .auto-on #more-fab svg { transform: rotate(90deg); }
-      .fab-open #more-fab .ic-dots, .kin-open #more-fab .ic-dots, .info-open #more-fab .ic-dots, .auto-on #more-fab .ic-dots { opacity: 0; }
-      .fab-open #more-fab .ic-x, .kin-open #more-fab .ic-x, .info-open #more-fab .ic-x, .auto-on #more-fab .ic-x { opacity: 1; }
+      .fab-open #more-fab svg, .info-open #more-fab svg, .auto-on #more-fab svg { transform: rotate(90deg); }
+      .fab-open #more-fab .ic-dots, .info-open #more-fab .ic-dots, .auto-on #more-fab .ic-dots { opacity: 0; }
+      .fab-open #more-fab .ic-x, .info-open #more-fab .ic-x, .auto-on #more-fab .ic-x { opacity: 1; }
       #fab-backdrop { position: fixed; inset: 0; z-index: 95; background: transparent; pointer-events: none; }
       .fab-open #fab-backdrop { pointer-events: auto; }
       .menu {
@@ -178,12 +182,6 @@
       html:not(.fab-open) .menu .nav-item:nth-child(3) { transition-delay: .06s, .06s, 0s !important; }
       html:not(.fab-open) .menu .nav-item:nth-child(2) { transition-delay: .09s, .09s, 0s !important; }
       html:not(.fab-open) .menu .nav-item:nth-child(1) { transition-delay: .12s, .12s, 0s !important; }
-      /* order from the FAB upwards: Play, Auto-Type, Kinetic (T), music note (Restart), Info */
-      .menu .nav-item:nth-child(1) { order: 1; }
-      .menu .nav-item:nth-child(2) { order: 2; }
-      .menu .nav-item:nth-child(4) { order: 3; }
-      .menu .nav-item:nth-child(3) { order: 4; }
-      .menu .nav-item:nth-child(5) { order: 5; }
       .menu .nav-item svg { width: 20px !important; height: 20px !important; }
       .menu .nav-item svg path {
         fill: none !important; stroke: #EAE6E6 !important; stroke-width: 2 !important;
@@ -233,9 +231,9 @@
       #info-view {
         position: fixed; inset: 0; z-index: 90;
         background-color: #1C1717; color: #DFD8D8;
-        padding: 25vh 25vw; box-sizing: border-box; /* text container = 50vw x 50vh, centred */
+        padding: 40px 40px 40px 140px; box-sizing: border-box; /* same grid as the Home: text starts at the top-left */
         display: flex; flex-direction: column;
-        font-family: "Cormorant Garamond", serif;
+        font-family: "Baskervville", serif;
         opacity: 0; visibility: hidden;
         transition: opacity 0.45s ease, visibility 0s linear 0.45s;
         height: 100vh; height: 100dvh;
@@ -243,7 +241,7 @@
         scrollbar-width: none; outline: none;
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: auto 0; }
+      #info-view .info-in { margin: 0; width: 50vw; max-width: 100%; text-align: left; }
       #info-view p {
         margin: 0 0 1.25em; max-width: 22em;
         font-size: 36px; line-height: 1.2; letter-spacing: 1px; color: #DFD8D8;
@@ -254,7 +252,7 @@
       @media (min-width: 768px) { #info-view p { font-size: min(56px, 4.2vh); max-width: none; } }
       .info-open #info-view { opacity: 1; visibility: visible; transition: opacity 0.45s ease, visibility 0s; }
       .info-open #info-view p { opacity: 1; transform: none; }
-      .info-open .menu, .kin-open .menu, .auto-on .menu { opacity: 0 !important; pointer-events: none !important; }
+      .info-open .menu, .auto-on .menu { opacity: 0 !important; pointer-events: none !important; }
       /* Mobile / touch layout (class set before first paint by the head script) */
       .is-mobile textarea {
         --mx: var(--edge);
@@ -274,21 +272,10 @@
         padding: max(clamp(32px, 9vw, 64px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + var(--sab, 0px) + 32px) max(var(--edge), env(safe-area-inset-left, 0px));
       }
       .is-mobile #info-view p { font-size: 40px; }
-      /* ===== Kinetic mode (Symphosizer-style): separate in-page screen, Home stays clean ===== */
-      #kin-view {
-        position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 92;
-        background-color: #1C1717; overflow: hidden;
-        opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility 0s linear .45s;
-      }
-      .kin-open #kin-view { opacity: 1; visibility: visible; transition: opacity .45s ease, visibility 0s; }
-      #kin-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-      #kin-input { position: fixed; left: 50%; bottom: 0; width: 2px; height: 2px; opacity: 0; border: 0; padding: 0; margin: 0; font-size: 16px; z-index: 93; caret-color: transparent; background: transparent; color: transparent; }
     </style>
   </head>
   <body>
     <div id="__nuxt"><style>#nuxt-loading{visibility:hidden;opacity:0;position:absolute;left:0;right:0;top:0;bottom:0;display:flex;justify-content:center;align-items:center;flex-direction:column;animation:nuxtLoadingIn 10s ease;-webkit-animation:nuxtLoadingIn 10s ease;animation-fill-mode:forwards;overflow:hidden}@keyframes nuxtLoadingIn{0%{visibility:hidden;opacity:0}20%{visibility:visible;opacity:0}100%{visibility:visible;opacity:1}}@-webkit-keyframes nuxtLoadingIn{0%{visibility:hidden;opacity:0}20%{visibility:visible;opacity:0}100%{visibility:visible;opacity:1}}#nuxt-loading>div,#nuxt-loading>div:after{border-radius:50%;width:5rem;height:5rem}#nuxt-loading>div{font-size:10px;position:relative;text-indent:-9999em;border:.5rem solid #f5f5f5;border-left:.5rem solid #000;-webkit-transform:translateZ(0);-ms-transform:translateZ(0);transform:translateZ(0);-webkit-animation:nuxtLoading 1.1s infinite linear;animation:nuxtLoading 1.1s infinite linear}#nuxt-loading.error>div{border-left:.5rem solid #ff4500;animation-duration:5s}@-webkit-keyframes nuxtLoading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes nuxtLoading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}</style><script>window.addEventListener("error",function(){var e=document.getElementById("nuxt-loading");e&&(e.className+=" error")})</script><div id="nuxt-loading" aria-live="polite" role="status"><div>Loading...</div></div></div>
-  <section id="kin-view" aria-label="Kinetic"><canvas id="kin-canvas"></canvas></section>
-  <input id="kin-input" maxlength="15" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Text" placeholder="Type to play...">
   <div id="fab-backdrop" aria-hidden="true"></div>
   <button id="more-fab" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ic-dots" d="M13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11C12.5523 11 13 11.4477 13 12ZM20 12C20 12.5523 19.5523 13 19 13C18.4477 13 18 12.5523 18 12C18 11.4477 18.4477 11 19 11C19.5523 11 20 11.4477 20 12ZM6 12C6 12.5523 5.55228 13 5 13C4.44772 13 4 12.5523 4 12C4 11.4477 4.44772 11 5 11C5.55228 11 6 11.4477 6 12Z"/><path class="ic-x" d="M18 6L12 12M12 12L6 18M12 12L6 6M12 12L18 18"/></svg></button>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim in pair programming with Claude.</p></div></section>
@@ -318,7 +305,6 @@
       grab();
       window.addEventListener('keydown', function (e) {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
-        if (document.documentElement.classList.contains('kin-open')) return;
         if (ta && document.activeElement !== ta) ta.focus({ preventScroll: true });
       }, true);
     })();
@@ -508,10 +494,9 @@
       /* FAB: toggles the round actions; any action, the backdrop, Esc or opening Info collapses it again */
       var fab = document.getElementById('more-fab');
       function setOpen(on) { root.classList.toggle('fab-open', on); fab.setAttribute('aria-expanded', on ? 'true' : 'false'); }
-      /* the FAB shows an X (instead of the dots) on Kinetic, Info and while Auto-Type runs, and then closes/stops that */
+      /* the FAB shows an X (instead of the dots) on Info and while Auto-Type runs, and then closes/stops that */
       fab.addEventListener('click', function () {
         if (root.classList.contains('info-open')) { if (window.__closeInfo) window.__closeInfo(); return; }
-        if (root.classList.contains('kin-open')) { if (window.__closeKinetic) window.__closeKinetic(); return; }
         if (root.classList.contains('auto-on')) {   /* X during Auto-Type: stop and go back to the default (empty) state */
           if (window.__autoStop) window.__autoStop();
           if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
@@ -523,7 +508,7 @@
         if (e.target.closest('.menu .nav-item')) setOpen(false);
         else if (!e.target.closest('#more-fab')) setOpen(false);
       }, true);
-      new MutationObserver(function () { if (/\b(info-open|kin-open|auto-on)\b/.test(root.className)) setOpen(false); })
+      new MutationObserver(function () { if (/\b(info-open|auto-on)\b/.test(root.className)) setOpen(false); })
         .observe(root, { attributes: true, attributeFilter: ['class'] });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
       /* The app wires each action to the 20px icon only. Make the whole round button respond: a click anywhere on the
@@ -576,216 +561,6 @@
         }, 60);
       }, true);
       }
-    })();
-  </script>
-<script>
-    /* Kinetic mode: per-glyph wave distortion on a canvas, driven only by the piano's audio analyser and the typed keys.
-       Each glyph has its own phase, so weight (wght axis), width (scaleX, the font has no wdth axis), slant and
-       vertical wave offset move independently. Typed keys are forwarded to the piano engine as keydowns. */
-    (function () {
-      var root = document.documentElement;
-      var view = document.getElementById('kin-view'), cv = document.getElementById('kin-canvas'), ctx = cv.getContext('2d');
-      var input = document.getElementById('kin-input');
-      var FONT = '"Cormorant Garamond", serif', MAXPX = 504, MAXLEN = 15;   /* Kinetic is for short words; long text belongs on the Home */
-      /* hy: how tall a letter grows, hx: how much it widens, sk: slant, k: phase spread between letters */
-      var V = { k: .9, amp: .05, sp: 1, hy: 5.2, hx: 1.3, sk: .45 };
-      var open = false, raf = 0, last = 0, level = 0, phase = 0, pitch = .5, gain = 1;
-      var ge = [], w100 = {}, dpr = 1, W = 0, H = 0, tbuf = null, fbuf = null, lastGood = 0;
-      function isMobile() { return root.classList.contains('is-mobile'); }
-      /* transparent AudioContext start: resume on the first real gesture, no prompts of any kind */
-      ['pointerdown', 'keydown', 'touchend'].forEach(function (n) {
-        document.addEventListener(n, function () { var c = window.Klang && window.Klang.context; if (c && c.state === 'suspended') c.resume(); }, true);
-      });
-      function resize() {
-        dpr = Math.min(window.devicePixelRatio || 1, 2); W = view.clientWidth; H = view.clientHeight;
-        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-        lastSig = '';   /* resizing clears the canvas: force a repaint */
-      }
-      var capR = 0;
-      function capRatio() {
-        if (!capR) { ctx.font = '400 100px ' + FONT; var m = ctx.measureText('H'); capR = (m.actualBoundingBoxAscent || 63) / 100; }
-        return capR;
-      }
-      function adv(ch) {
-        var w = w100[ch];
-        if (w === undefined) { ctx.font = '400 100px ' + FONT; w = w100[ch] = ctx.measureText(ch).width; }
-        return w;
-      }
-      function openK(push) {
-        if (open) return; open = true;
-        if (window.__autoStop) window.__autoStop();
-        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-        root.classList.add('kin-open');
-        if (push) history.pushState({ kin: 1 }, '', '#kinetic');
-        resize(); input.focus({ preventScroll: true }); try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
-        if (document.fonts && document.fonts.load) document.fonts.load('400 100px "Cormorant Garamond"').then(function () { w100 = {}; capR = 0; });
-        last = 0; raf = requestAnimationFrame(draw);
-        [60, 250, 600].forEach(function (ms) { setTimeout(function () { if (open && document.activeElement !== input) input.focus({ preventScroll: true }); }, ms); });
-      }
-      function closeK(fromPop) {
-        if (!open) return; open = false;
-        root.classList.remove('kin-open'); cancelAnimationFrame(raf);
-        if (!fromPop) {
-          if (history.state && history.state.kin) history.back();
-          else history.replaceState(null, '', location.pathname + location.search);
-        }
-        var t = document.querySelector('textarea'); if (t) t.focus({ preventScroll: true });
-      }
-      window.__openKinetic = function () { if (open) closeK(false); else openK(true); };   /* the T button toggles the Kinetic page */
-      window.__closeKinetic = function () { closeK(false); };
-      window.addEventListener('popstate', function () { if (location.hash === '#kinetic') openK(false); else closeK(true); });
-      window.addEventListener('keydown', function (e) {
-        if (!open) return;
-        if (e.key === 'Escape') { closeK(false); e.preventDefault(); return; }
-        /* whatever had focus, typing always lands in the Kinetic field */
-        if (e.isTrusted && !e.metaKey && !e.ctrlKey && !e.altKey && document.activeElement !== input) input.focus({ preventScroll: true });
-      }, true);
-      window.addEventListener('resize', function () { if (open) resize(); });
-      if (window.ResizeObserver) new ResizeObserver(function () { if (open) resize(); }).observe(view);
-      view.addEventListener('pointerdown', function () { input.focus({ preventScroll: true }); });
-      /* keep focus in the hidden input when pressing toolbar buttons */
-
-      /* typing -> piano engine */
-      var eng = null;
-      function findEngine() {
-        if (eng) return eng;
-        (function walk(vm) {
-          if (eng || !vm) return;
-          if (vm.pianoEngine) { eng = vm.pianoEngine; return; }
-          (vm.$children || []).forEach(walk);
-        })(window.$nuxt);
-        return eng;
-      }
-      /* play the piano without touching the Home text: ask the engine for the sound only */
-      function forward(key) {
-        var e = findEngine(); if (!e) return;
-        var kc = key === 'Backspace' ? 8 : (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0);
-        try {
-          if (key === 'Backspace') { var pl = e.currentPlayer; if (pl && pl.playIndex > 0) e.echoStep(pl.playIndex - 1); }
-          else e.soundOnly(key, kc);
-        } catch (err) {}
-      }
-      input.addEventListener('keydown', function (e) {
-        if (e.metaKey || e.ctrlKey || e.altKey) return;
-        if (e.key && e.key !== 'Unidentified' && e.keyCode !== 229 && (e.key.length === 1 || e.key === 'Backspace')) {
-          lastGood = Date.now();
-          /* the field is full: nothing is typed, so no note either */
-          if (e.key.length === 1 && input.value.length >= MAXLEN && input.selectionStart === input.selectionEnd) return;
-          forward(e.key);
-        }
-      });
-      input.addEventListener('input', function (e) {   /* virtual keyboards: key is "Unidentified" on keydown */
-        if (!e.isTrusted || Date.now() - lastGood < 120) return;
-        if (e.inputType === 'insertText' && e.data && e.data.length === 1) forward(e.data);
-        else if (e.inputType === 'deleteContentBackward') forward('Backspace');
-      });
-
-      function analyse() {
-        var an = window.__clavierAnalyser; if (!an) return 0;
-        if (!tbuf || tbuf.length !== an.fftSize) { tbuf = new Float32Array(an.fftSize); fbuf = new Uint8Array(an.frequencyBinCount); }
-        an.getFloatTimeDomainData(tbuf); an.getByteFrequencyData(fbuf);
-        var s = 0, i; for (i = 0; i < tbuf.length; i++) s += tbuf[i] * tbuf[i];
-        var rms = Math.sqrt(s / tbuf.length), num = 0, den = 0, hz = an.context.sampleRate / an.fftSize;
-        for (i = 1; i < fbuf.length; i++) { num += i * hz * fbuf[i]; den += fbuf[i]; }
-        if (den > 50) { var c = num / den; var pn = Math.max(0, Math.min(1, 1 - Math.log(Math.max(c, 150) / 150) / Math.LN2 / 4.5)); pitch += (pn - pitch) * .2; }
-        return rms;
-      }
-      /* Each letter listens to its own slice of the piano's spectrum (log-spaced, low notes on the left,
-         high notes on the right), so letters swell independently while the whole word stays centred. */
-      function bandEnergy(i, n) {
-        var an = window.__clavierAnalyser; if (!an || !fbuf) return 0;
-        var hz = an.context.sampleRate / an.fftSize, f0 = 90, f1 = 4200;
-        var lo = f0 * Math.pow(f1 / f0, i / n), hi = f0 * Math.pow(f1 / f0, (i + 1) / n);
-        var a = Math.max(1, Math.floor(lo / hz)), z = Math.min(fbuf.length - 1, Math.max(a, Math.ceil(hi / hz))), m = 0;
-        for (var k = a; k <= z; k++) if (fbuf[k] > m) m = fbuf[k];
-        return Math.max(0, m / 255 - .12) * 1.5;
-      }
-      /* empty field: same placeholder as the Home, with a blinking caret at its start */
-      function drawPlaceholder(now) {
-        var t = 'Type to play...'; ctx.font = '400 100px ' + FONT;
-        var s = ctx.measureText(t).width, S0 = Math.min(MAXPX, W * (isMobile() ? .62 : .43) * 100 / Math.max(1, s));
-        var capIdle = S0 * capRatio(), base = H * .56, x = (W - s * S0 / 100) / 2;
-        ctx.fillStyle = '#4C3E3E'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-        ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(t, x, base);
-        if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(x - S0 * .04, base - capIdle, Math.max(2, S0 * .012), capIdle); }
-      }
-      /* Stiff, stepped motion. Each letter owns a level 0..3 (own slice of the piano spectrum). A louder band makes it
-         jump straight to that level; it only drops one level at a time, after holding each level for STEP ms, so the
-         fast flutter of the music can never shake it. Letters only grow upward from a fixed baseline: nothing moves
-         sideways, and the tallest level stays inside the 40px grid. */
-      /* Intensity layer (on top of the stepped letters): a smooth envelope of the overall loudness. Below START nothing
-         happens; above it the whole word leans to the right and grows from the centre of the page, more and more as the
-         sound gets stronger, until it bursts out of the screen. */
-      var inten = 0, E = 0, START = .5, IFULL = 2.4, KMAX = 40, LEAN = .6;   /* E: leaky integral of the sound's energy (louder and denser typing builds it up) */
-      var lev = [], peak = [], hold = [], slowG = 0, lastG = 0, lastSig = '', STEP = 40, PEAK_HOLD = 90, RISE = 4, LEVELS = 12;
-      function draw(now) {
-        raf = requestAnimationFrame(draw);
-        var rms = analyse();
-        var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-        E = E * Math.exp(-dt / .25) + rms * rms * dt;
-        var it = Math.min(IFULL, E / .0025 * gain);   /* 1 = sustained loudness of about 0.1 rms; keeps counting up to IFULL so harder typing keeps growing it */
-        inten += (it - inten) * (1 - Math.exp(-dt / (it > inten ? .1 : .16)));   /* smooth both ways */
-        var text = input.value.slice(0, MAXLEN), n = text.length;
-        if (!n) {
-          var sp = 'ph|' + (Math.floor(now / 530) % 2) + '|' + W + 'x' + H;
-          if (sp === lastSig) return; lastSig = sp;
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); drawPlaceholder(now); return;
-        }
-        var kk = Math.max(0, Math.min(1, (inten - START) / (IFULL - START))); kk = kk * kk * (3 - 2 * kk);   /* smoothstep from the start point to full intensity */
-        var i, sum100 = 0;
-        for (i = 0; i < n; i++) sum100 += adv(text.charAt(i));
-        var gridW = W - 80, gridH = H - 80;
-        var S0 = Math.min(MAXPX, gridW * (isMobile() ? .8 : .43) * 100 / Math.max(.01, sum100));
-        var capR = capRatio(), base = H * .56, capIdle = S0 * capR;
-        var mMax = Math.max(1, Math.min(3, (base - 40) / capIdle, .4 * gridH / capIdle));
-        /* growth is proportional and around the middle of the word, which slides to the exact centre of the screen as
-           the intensity rises; the stretch-up of single letters fades out so only the uniform growth remains */
-        var cyRest = base - capIdle / 2, sc = Math.pow(Math.max(KMAX, 3.6 * H / capIdle), kk); window.__kin = { inten: inten, kk: kk, sc: sc, lev: lev };   /* at full intensity a letter is ~3.6 screens tall: no stroke ends or serifs stay visible */
-        /* A note ONSET (sudden rise of the overall loudness above its recent average) fires once; between onsets the
-           fluctuation of the sound is ignored. The loudness decides how high the letters go; WHICH letters go up, and
-           by how much, is random each time, so growth never marches from left to right. */
-        var vg = rms * 10 * gain;
-        var fire = vg - slowG > .15 && now - lastG > 90;
-        slowG += (vg - slowG) * Math.min(1, dt * 10);
-        if (fire) lastG = now;
-        var tg = Math.max(0, Math.min(LEVELS, Math.round(vg * LEVELS / 1.1)));
-        for (i = 0; i < n; i++) {
-          var cur = lev[i] || 0, pk = peak[i] || 0;
-          if (fire && Math.random() < .65) {
-            var t = Math.max(1, Math.round(tg * (.25 + .75 * Math.random())));
-            if (t >= cur) { pk = t; hold[i] = now + PEAK_HOLD; }
-          }
-          if (cur < pk) cur = Math.min(pk, cur + RISE);                       /* quick, straight rise */
-          else if (cur > 0 && now >= (hold[i] || 0)) { cur -= 1; pk = cur; hold[i] = now + STEP; }  /* straight, stepped fall */
-          peak[i] = pk;
-          lev[i] = cur;
-        }
-        /* nothing changed since the last painted frame (the usual idle case): do not repaint at all */
-        var sel = Math.max(0, Math.min(n, input.selectionStart == null ? n : input.selectionStart));
-        var sig = kk.toFixed(3) + '|' + text + '|' + sel + '|' + (Math.floor(now / 530) % 2) + '|' + W + 'x' + H + '|' + lev.slice(0, n).join(',');
-        if (sig === lastSig) return;
-        lastSig = sig;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-        ctx.save(); ctx.translate(W / 2, cyRest + (H / 2 - cyRest) * kk); ctx.transform(1, 0, -LEAN * kk, 1, 0, 0); ctx.scale(sc, sc); ctx.translate(-W / 2, -cyRest);
-        var ws = new Array(n), total = 0;
-        for (i = 0; i < n; i++) { ws[i] = adv(text.charAt(i)) * S0 / 100; total += ws[i]; }
-        var x = (W - total) / 2, cum = new Array(n + 1);
-        ctx.fillStyle = '#DFD8D8'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-        for (i = 0; i < n; i++) {
-          var ch = text.charAt(i), w = ws[i], m = 1 + (mMax - 1) * (lev[i] || 0) / LEVELS * (1 - kk), sk = 0; /* never deformed sideways: letters only stretch upward */
-          if (ch !== ' ') {
-            ctx.save(); ctx.translate(x + w / 2, base); ctx.transform(1, 0, -sk * m, m, 0, 0);
-            ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(ch, 0, 0); ctx.restore();
-          }
-          cum[i] = x; x += w;
-        }
-        cum[n] = x;
-        var sel = Math.max(0, Math.min(n, input.selectionStart == null ? n : input.selectionStart));
-        if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(cum[sel] + (sel === n ? S0 * .03 : -S0 * .01), base - capIdle, Math.max(2, S0 * .012), capIdle); }
-        ctx.restore();
-      }
-      /* Home is always the default page: a reload (or a stale link) on #kinetic lands on Home */
-      if (location.hash === '#kinetic') history.replaceState(null, '', location.pathname + location.search);
     })();
   </script>
 </body>
