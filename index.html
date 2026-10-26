@@ -679,7 +679,7 @@
         var mMax = Math.max(1, Math.min(3, (base - 40) / capIdle, .4 * gridH / capIdle));
         /* growth is proportional and around the middle of the word, which slides to the exact centre of the screen as
            the intensity rises; the stretch-up of single letters fades out so only the uniform growth remains */
-        var cyRest = base - capIdle / 2, sc = 1 + (KMAX - 1) * kk;
+        var cyRest = base - capIdle / 2, sc = 1 + (Math.max(KMAX, 3.6 * H / capIdle) - 1) * kk;   /* at full intensity a letter is ~3.6 screens tall: no stroke ends or serifs stay visible */
         ctx.save(); ctx.translate(W / 2, cyRest + (H / 2 - cyRest) * kk); ctx.transform(1, 0, -LEAN * kk, 1, 0, 0); ctx.scale(sc, sc); ctx.translate(-W / 2, -cyRest);
         var ws = new Array(n), total = 0;
         for (i = 0; i < n; i++) { ws[i] = adv(text.charAt(i)) * S0 / 100; total += ws[i]; }
