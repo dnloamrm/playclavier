@@ -336,21 +336,21 @@
         -webkit-backdrop-filter: blur(32px) saturate(190%); backdrop-filter: blur(32px) saturate(190%);
         box-shadow: inset 0 1px 1px rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .05);
       }
-      html.fab-open.fab-open .menu .nav-item,
-      html.fab-open.fab-open #more-fab {
-        background-color: rgba(120, 100, 100, .34) !important;
-        -webkit-backdrop-filter: blur(28px) saturate(190%) !important; backdrop-filter: blur(28px) saturate(190%) !important;
-        box-shadow:
-          inset 0 1px 1px rgba(255, 255, 255, .38),
-          inset 0 -1px 1px rgba(255, 255, 255, .10),
-          inset 0 0 0 1px rgba(255, 255, 255, .12),
-          inset 0 12px 14px -8px rgba(255, 255, 255, .10) !important;
+      /* Button model borrowed from symphosizer.wearecollins.com: black square, 1px white-ish border, 4px radius,
+         0.2s colour transition (kept at 48px / 12px gaps). Replaces the round glass buttons. */
+      html.fab-open.fab-open .menu .nav-item, html .menu .nav-item, html #more-fab, html #info-close {
+        background-color: #000 !important;
+        border: 1px solid #EAE6E6 !important;
+        border-radius: 4px !important;
+        box-shadow: none !important;
+        -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+        box-sizing: border-box !important;
+        transition-property: opacity, transform, background-color, color !important;
       }
-      html.fab-open.fab-open .menu .nav-item:hover,
-      html.fab-open.fab-open #more-fab:hover { background-color: rgba(140, 118, 118, .46) !important; }
-      html.fab-open.fab-open .menu .nav-item:active,
-      html.fab-open.fab-open #more-fab:active { background-color: rgba(140, 118, 118, .56) !important; }
-      html.fab-open .menu .nav-item svg path, html.fab-open #more-fab svg path { stroke: #F3EFEF !important; }
+      html.fab-open.fab-open .menu .nav-item { transition-duration: .22s, .45s, .2s, .2s !important; }
+      html.fab-open.fab-open .menu .nav-item:hover, html #more-fab:hover, html #info-close:hover { background-color: #2B2424 !important; }
+      html.fab-open.fab-open .menu .nav-item:active, html #more-fab:active, html #info-close:active { background-color: #3A3030 !important; }
+      html .menu .nav-item svg path, html #more-fab svg path, html #info-close svg path { stroke: #EAE6E6 !important; }
     </style>
   </head>
   <body>
