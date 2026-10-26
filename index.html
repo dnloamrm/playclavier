@@ -512,7 +512,11 @@
       fab.addEventListener('click', function () {
         if (root.classList.contains('info-open')) { if (window.__closeInfo) window.__closeInfo(); return; }
         if (root.classList.contains('kin-open')) { if (window.__closeKinetic) window.__closeKinetic(); return; }
-        if (root.classList.contains('auto-on')) { if (window.__autoStop) window.__autoStop(); return; }
+        if (root.classList.contains('auto-on')) {   /* X during Auto-Type: stop and go back to the default (empty) state */
+          if (window.__autoStop) window.__autoStop();
+          if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
+          return;
+        }
         setOpen(!root.classList.contains('fab-open'));
       });
       document.addEventListener('click', function (e) {
