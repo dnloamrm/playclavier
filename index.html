@@ -664,9 +664,9 @@
         raf = requestAnimationFrame(draw);
         var rms = analyse();
         var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-        E = E * Math.exp(-dt / .6) + rms * rms * dt;
-        var it = Math.min(1, E / .006 * gain);   /* 1 = sustained loudness of about 0.1 rms (fast, dense typing) */
-        inten += (it - inten) * (1 - Math.exp(-dt / (it > inten ? .1 : .45)));   /* smooth both ways */
+        E = E * Math.exp(-dt / .25) + rms * rms * dt;
+        var it = Math.min(1, E / .0025 * gain);   /* 1 = sustained loudness of about 0.1 rms (fast, dense typing) */
+        inten += (it - inten) * (1 - Math.exp(-dt / (it > inten ? .1 : .16)));   /* smooth both ways */
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
         var text = input.value.slice(0, 15), n = text.length;
         if (!n) { drawPlaceholder(now); return; }
