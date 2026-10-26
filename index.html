@@ -19,7 +19,7 @@
         AudioNode.prototype.connect = function (dest) {
           if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {
             var ctx = dest.context, an = taps.get(ctx);
-            if (!an) { an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.2; taps.set(ctx, an); window.__clavierAnalyser = an; }
+            if (!an) { an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.6; taps.set(ctx, an); window.__clavierAnalyser = an; }
             rawConnect.call(this, an);
             if (mobile) {
               var ch = chains.get(ctx);
@@ -651,47 +651,43 @@
         ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(t, x, base);
         if (Math.floor(now / 530) % 2 === 0) { ctx.fillStyle = '#DFD8D8'; ctx.fillRect(x - S0 * .04, base - capIdle, Math.max(2, S0 * .012), capIdle); }
       }
+      /* Stiff, stepped motion. Each letter owns a level 0..3 (own slice of the piano spectrum). A louder band makes it
+         jump straight to that level; it only drops one level at a time, after holding each level for STEP ms, so the
+         fast flutter of the music can never shake it. Letters only grow upward from a fixed baseline: nothing moves
+         sideways, and the tallest level stays inside the 40px grid. */
+      var lev = [], hold = [], slow = [], lastOn = [], STEP = 150, LEVELS = 3;
       function draw(now) {
         raf = requestAnimationFrame(draw);
+        analyse();
         var dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-        var rms = analyse();
-        /* only the audio drives the motion; it is "hard": a gate, a linear fast attack, a clamp at the maximum
-           and a linear release with no tail (observed in the reference recording: ~0.12 s up, ~0.5 s down) */
-        var lt = rms * 5 * gain; lt = lt < .1 ? 0 : Math.min(1, (lt - .1) * 2);
-        level = lt > level ? Math.min(lt, level + dt / .12) : Math.max(lt, level - dt / .5);
-        phase += dt * V.sp * (1.2 + 7 * pitch * level + 3 * level);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
         var text = input.value.slice(0, 15), n = text.length;
         if (!n) { drawPlaceholder(now); return; }
-        var i, g = new Array(n), sum100 = 0;
-        for (i = 0; i < n; i++) {
-          var v = bandEnergy(i, n) * gain, tgt = v < .2 ? 0 : Math.min(1, (v - .2) * 1.6), cur = ge[i] || 0;
-          cur = tgt > cur ? Math.min(tgt, cur + dt / .12) : Math.max(tgt, cur - dt / .5);
-          ge[i] = cur;
-          g[i] = Math.max(cur, level * .6);
-          sum100 += adv(text.charAt(i));
-        }
-        /* Resting size: the word is small and quiet; sound makes each letter shoot up from a shared baseline,
-           narrow and slanted, and fall back along the note's decay. Overflow past the edges is part of the look. */
-        var S0 = Math.min(MAXPX, W * (isMobile() ? .62 : .43) * 100 / Math.max(.01, sum100));
-        var capR = capRatio(), base = H * .56, capIdle = S0 * capR, x, total = 0, ws = new Array(n), hxs = new Array(n), hys = new Array(n), sks = new Array(n);
-        var maxHy = Math.max(1, (base - 36) / capIdle);
-        for (i = 0; i < n; i++) {
-          hys[i] = Math.min(maxHy, 1 + V.hy * g[i]);
-          hxs[i] = 1 + V.hx * g[i];
-          sks[i] = V.sk * Math.max(0, Math.min(1, (level - .3) / .4)) * g[i];
-          ws[i] = adv(text.charAt(i)) * S0 / 100 * hxs[i]; total += ws[i];
-        }
-        x = (W - total) / 2;
-        var cum = new Array(n + 1);
+        var i, sum100 = 0;
+        for (i = 0; i < n; i++) sum100 += adv(text.charAt(i));
+        var gridW = W - 80, gridH = H - 80;
+        var S0 = Math.min(MAXPX, gridW * (isMobile() ? .8 : .43) * 100 / Math.max(.01, sum100));
+        var capR = capRatio(), base = H * .56, capIdle = S0 * capR;
+        var mMax = Math.max(1, Math.min(3, (base - 40) / capIdle, .4 * gridH / capIdle));
+        var ws = new Array(n), total = 0;
+        for (i = 0; i < n; i++) { ws[i] = adv(text.charAt(i)) * S0 / 100; total += ws[i]; }
+        var x = (W - total) / 2, cum = new Array(n + 1);
         ctx.fillStyle = '#DFD8D8'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
         for (i = 0; i < n; i++) {
-          var ch = text.charAt(i), w = ws[i];
+          /* A note ONSET (sudden rise above the band's own recent average) sets the level; between onsets the
+             fluctuation of the sound is ignored and the letter only steps down. */
+          var v = bandEnergy(i, n) * gain, avg = slow[i] || 0, cur = lev[i] || 0;
+          slow[i] = avg + (v - avg) * Math.min(1, dt * 6);
+          if (v - avg > .15 && now - (lastOn[i] || 0) > 140) {
+            var t = v < .2 ? 0 : v < .5 ? 1 : v < .85 ? 2 : 3;
+            if (t >= cur) { cur = t; hold[i] = now + STEP; }
+            lastOn[i] = now;
+          } else if (cur > 0 && now >= (hold[i] || 0)) { cur -= 1; hold[i] = now + STEP; }
+          lev[i] = cur;
+          var ch = text.charAt(i), w = ws[i], m = 1 + (mMax - 1) * cur / LEVELS, sk = cur === LEVELS ? .28 : 0; /* leans sideways only at the strongest level */
           if (ch !== ' ') {
-            var wt = Math.round(300 + 400 * g[i]);
-            ctx.save(); ctx.translate(x + w / 2, base);
-            ctx.transform(hxs[i], 0, -sks[i] * hys[i], hys[i], 0, 0);
-            ctx.font = wt + ' ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(ch, 0, 0); ctx.restore();
+            ctx.save(); ctx.translate(x + w / 2, base); ctx.transform(1, 0, -sk * m, m, 0, 0);
+            ctx.font = '400 ' + S0.toFixed(1) + 'px ' + FONT; ctx.fillText(ch, 0, 0); ctx.restore();
           }
           cum[i] = x; x += w;
         }
