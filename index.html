@@ -19,7 +19,7 @@
         AudioNode.prototype.connect = function (dest) {
           if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {
             var ctx = dest.context, an = taps.get(ctx);
-            if (!an) { an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.6; taps.set(ctx, an); window.__clavierAnalyser = an; }
+            if (!an) { an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.3; taps.set(ctx, an); window.__clavierAnalyser = an; }
             rawConnect.call(this, an);
             if (mobile) {
               var ch = chains.get(ctx);
@@ -655,7 +655,7 @@
          jump straight to that level; it only drops one level at a time, after holding each level for STEP ms, so the
          fast flutter of the music can never shake it. Letters only grow upward from a fixed baseline: nothing moves
          sideways, and the tallest level stays inside the 40px grid. */
-      var lev = [], hold = [], slow = [], lastOn = [], STEP = 150, LEVELS = 3;
+      var lev = [], peak = [], hold = [], slow = [], lastOn = [], STEP = 40, PEAK_HOLD = 90, RISE = 4, LEVELS = 12;
       function draw(now) {
         raf = requestAnimationFrame(draw);
         analyse();
@@ -676,13 +676,16 @@
         for (i = 0; i < n; i++) {
           /* A note ONSET (sudden rise above the band's own recent average) sets the level; between onsets the
              fluctuation of the sound is ignored and the letter only steps down. */
-          var v = bandEnergy(i, n) * gain, avg = slow[i] || 0, cur = lev[i] || 0;
-          slow[i] = avg + (v - avg) * Math.min(1, dt * 6);
-          if (v - avg > .15 && now - (lastOn[i] || 0) > 140) {
-            var t = v < .2 ? 0 : v < .5 ? 1 : v < .85 ? 2 : 3;
-            if (t >= cur) { cur = t; hold[i] = now + STEP; }
+          var v = bandEnergy(i, n) * gain, avg = slow[i] || 0, cur = lev[i] || 0, pk = peak[i] || 0;
+          slow[i] = avg + (v - avg) * Math.min(1, dt * 10);
+          if (v - avg > .12 && now - (lastOn[i] || 0) > 90) {
+            var t = Math.max(0, Math.min(LEVELS, Math.round((v - .15) * LEVELS / .85)));
+            if (t >= cur) { pk = t; hold[i] = now + PEAK_HOLD; }
             lastOn[i] = now;
-          } else if (cur > 0 && now >= (hold[i] || 0)) { cur -= 1; hold[i] = now + STEP; }
+          }
+          if (cur < pk) cur = Math.min(pk, cur + RISE);                       /* quick, straight rise */
+          else if (cur > 0 && now >= (hold[i] || 0)) { cur -= 1; pk = cur; hold[i] = now + STEP; }  /* straight, stepped fall */
+          peak[i] = pk;
           lev[i] = cur;
           var ch = text.charAt(i), w = ws[i], m = 1 + (mMax - 1) * cur / LEVELS, sk = 0; /* never deformed sideways: letters only stretch upward */
           if (ch !== ' ') {
