@@ -212,9 +212,9 @@
       @media (min-width: 768px) { #info-view p { font-size: 56px; } }
       .info-open #info-view { opacity: 1; visibility: visible; transition: opacity 0.45s ease, visibility 0s; }
       .info-open #info-view p { opacity: 1; transform: none; }
-      /* X: fixed in the bottom-left corner (like the original's first button), shown only on the Info view */
+      /* X: fixed bottom-centre, exactly where the dock sits, shown only on the Info view */
       #info-close {
-        position: fixed; left: var(--edge); bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px)); z-index: 100;
+        position: fixed; left: 50%; margin-left: calc(var(--btn) / -2); bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px)); z-index: 100;
         width: var(--btn); height: var(--btn); padding: 0; cursor: pointer; box-sizing: border-box;
         border: 1px solid #EAE6E6; border-radius: 4px; background: transparent;
         display: flex; align-items: center; justify-content: center;
