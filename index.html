@@ -13,6 +13,7 @@
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
         if (!mobile) return;
+        document.documentElement.classList.add('is-mobile');
         window.__audioConfig = 'audio/config.mobile.js';
         var chains = new WeakMap(), rawConnect = AudioNode.prototype.connect;
         AudioNode.prototype.connect = function (dest) {
@@ -83,10 +84,13 @@
       /* Critical inline CSS: paints the correct theme before any JS/async CSS
          loads, eliminating the flash of unstyled (browser-default gray/white)
          background during initial load and reloads. */
+      :root { --sab: env(safe-area-inset-bottom, 0px); }
       html, body {
+        overscroll-behavior: none;
         margin: 0;
         padding: 0;
         height: 100%;
+        height: 100dvh;
         width: 100%;
         overflow: hidden;
         background-color: #1C1717;
@@ -308,14 +312,14 @@
         padding: 0 0 calc(var(--fab) + var(--edge) + var(--sab, 0px) + 16px) 0 !important;
         width: calc(100% - max(var(--mx), env(safe-area-inset-left, 0px)) - max(var(--mx), env(safe-area-inset-right, 0px))) !important;
         height: calc(var(--vvh, 100dvh) - max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px)) !important;
-        font-size: 32px !important; line-height: 1.25 !important;
+        font-size: 40px !important; line-height: 1.25 !important;
       }
       .is-mobile .main-wrapper .main {
         position: fixed !important; left: 0 !important; top: var(--vvt, 0px) !important;
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view { padding: max(clamp(32px, 9vw, 64px), env(safe-area-inset-top, 0px) + 16px) max(clamp(24px, 7vw, 48px), env(safe-area-inset-right, 0px)) clamp(32px, 9vw, 64px) max(clamp(24px, 7vw, 48px), env(safe-area-inset-left, 0px)); }
-      .is-mobile #info-view p { font-size: 32px; }
+      .is-mobile #info-view p { font-size: 40px; }
     </style>
   </head>
   <body>
@@ -483,12 +487,17 @@
       var vv = window.visualViewport;
       if (mobile) {
       function layout() {
-        var h = vv ? vv.height : window.innerHeight;
         var kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
-        root.style.setProperty('--vvh', h + 'px');
-        root.style.setProperty('--keyboard-offset', kb + 'px');
-        root.style.setProperty('--sab', kb > 80 ? '0px' : 'env(safe-area-inset-bottom, 0px)');
-        root.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px');
+        if (kb > 80) {
+          /* keyboard up: pin the writing area to the visible viewport */
+          root.style.setProperty('--vvh', vv.height + 'px');
+          root.style.setProperty('--vvt', vv.offsetTop + 'px');
+          root.style.setProperty('--keyboard-offset', kb + 'px');
+          root.style.setProperty('--sab', '0px');
+        } else {
+          /* no keyboard: static CSS (100dvh, env(safe-area-*)) already lays everything out, no JS shift */
+          ['--vvh', '--vvt', '--keyboard-offset', '--sab'].forEach(function (k) { root.style.removeProperty(k); });
+        }
         if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
       }
       if (vv) { vv.addEventListener('resize', layout); vv.addEventListener('scroll', layout); }
