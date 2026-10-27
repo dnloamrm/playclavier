@@ -651,7 +651,11 @@
         if (!on && mode) { mode = null; paintSelection(); }
         plus.setAttribute('aria-expanded', on ? 'true' : 'false'); plus.setAttribute('aria-label', on ? 'Hide tools' : 'Show tools');
       }
-      plus.addEventListener('click', function () { setTools(!root.classList.contains('tools-open')); });
+      plus.addEventListener('click', function () {
+        var on = !root.classList.contains('tools-open');
+        if (!on && root.classList.contains('info-open') && window.__closeInfo) window.__closeInfo();   /* X always lands on the home screen, Info included */
+        setTools(on);
+      });
       infoBtn.addEventListener('click', function () {
         if (root.classList.contains('info-open')) { if (window.__closeInfo) window.__closeInfo(); }
         else if (window.__openInfo) window.__openInfo();
