@@ -277,7 +277,8 @@
       }
       @media (max-width: 1000px) { #ui { --sw: min(40px, calc((100vw - 2 * var(--edge) - 2px) / 11)); } #ui #palette { width: calc(var(--sw) * 11 + 2px); } }
       /* phones: the dock wraps in two rows above the corner buttons, the palette sits above it */
-      .is-mobile #ui #dock { flex-wrap: wrap; justify-content: center; row-gap: var(--block-gap); width: calc(100vw - 2 * var(--edge)); bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px)); }
+      .is-mobile #ui #dock { flex-wrap: wrap; justify-content: flex-start; left: max(var(--edge), env(safe-area-inset-left, 0px)); transform: none;   /* phones: rows start at the left margin, like the corner button and the text */
+         row-gap: var(--block-gap); width: calc(100vw - 2 * var(--edge)); bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px)); }
       .is-mobile #ui #palette { bottom: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + 8px + 12px + var(--sab, 0px)); }
       /* Text box inset: reset the legacy paddings so the grid below rules.
          Scoped with :has() so it only touches the home-page section/container
