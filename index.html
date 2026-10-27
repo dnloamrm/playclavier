@@ -1,4 +1,10 @@
 <!doctype html>
+<!--
+  Clavier - Copyright (c) 2026 Danilo Amorim. All rights reserved.
+  The interface code in this file is proprietary. Third-party parts keep their own licences:
+  Nuxt / Vue (MIT), Salamander Grand Piano samples (CC BY 3.0, see credits.txt), Klang audio engine,
+  Debussy "Clair de lune" MIDI (public domain, Mutopia). Typefaces: ABC Arizona by Dinamo (trial files).
+-->
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head><script>
 /* Colours. The interface = ONE foreground colour (typography, borders, icons, labels), the background, and the placeholder
@@ -207,14 +213,16 @@
          dock (PLAY / AUTO-JAM / NEW). Square buttons, 6px corners, thin border; 40px from the grid margins (20px on mobile). */
       html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; }
       html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; }
-      #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }   /* passive: only the buttons take clicks */
+      #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+      /* phones: the layer follows the VISUAL viewport (set live from JS): same height, same offset, GPU-translated */
+      .is-mobile #ui { inset: auto; left: 0; top: 0; width: 100%; height: var(--ui-h, 100dvh); transform: translate3d(0, var(--ui-top, 0px), 0); }   /* passive: only the buttons take clicks */
       #ui button {
         pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-fg, #F9FAFA); background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
       }
       #ui .corner {
-        position: fixed; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
+        position: absolute; bottom: calc(var(--dock-b) + var(--sab, 0px));
         width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
         display: flex; align-items: center; justify-content: center;
       }
@@ -224,8 +232,8 @@
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
       #ui #dock {
-        position: fixed; left: 50%; transform: translateX(-50%);
-        bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
+        position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: calc(var(--dock-b) + var(--sab, 0px));
         display: flex; gap: 12px; opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open #ui #dock { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
@@ -243,8 +251,8 @@
       #ui #colors svg { width: 20px; height: 20px; fill: currentColor; display: block; }
       #ui { --sw: 40px; }
       #ui #palette {
-        position: fixed; left: 50%; transform: translateX(-50%);
-        bottom: calc(var(--dock-b) + var(--btn) + 12px + var(--sab, 0px) + var(--keyboard-offset, 0px));
+        position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: calc(var(--dock-b) + var(--btn) + 12px + var(--sab, 0px));
         display: flex; flex-wrap: wrap; box-sizing: border-box; overflow: hidden;
         width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
         opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
@@ -257,8 +265,8 @@
       }
       @media (max-width: 1000px) { #ui { --sw: min(40px, calc((100vw - 2 * var(--edge) - 2px) / 11)); } #ui #palette { width: calc(var(--sw) * 11 + 2px); } }
       /* phones: the dock wraps in two rows above the corner buttons, the palette sits above it */
-      .is-mobile #ui #dock { flex-wrap: wrap; justify-content: center; row-gap: 8px; width: calc(100vw - 2 * var(--edge)); bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px) + var(--keyboard-offset, 0px)); }
-      .is-mobile #ui #palette { bottom: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + 16px + 12px + var(--sab, 0px) + var(--keyboard-offset, 0px)); }
+      .is-mobile #ui #dock { flex-wrap: wrap; justify-content: center; row-gap: 8px; width: calc(100vw - 2 * var(--edge)); bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px)); }
+      .is-mobile #ui #palette { bottom: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + 16px + 12px + var(--sab, 0px)); }
       /* Text box inset: reset the legacy paddings so the grid below rules.
          Scoped with :has() so it only touches the home-page section/container
          and never the ModalWrapper instance (song picker, info, share), which
@@ -318,8 +326,7 @@
         padding: calc(var(--dock-b) + var(--btn) + 32px) 40px; box-sizing: border-box;   /* clear of the buttons, centred on the screen */
         display: flex; flex-direction: column;
         font-family: "Arizona Sans", sans-serif; font-weight: 400;
-        opacity: 0; visibility: hidden;
-        transition: opacity 0.45s ease, visibility 0s linear 0.45s;
+        opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
         height: 100vh; height: 100dvh;
         overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
         scrollbar-width: none; outline: none;
@@ -329,17 +336,13 @@
       #info-view p {
         margin: 0 0 28px;
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
-        opacity: 0; transform: translateY(10px);
-        transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
       }
       #info-view p:last-child { margin-bottom: 0; }
-      #info-view p + p { transition-delay: 0.22s; } #info-view p + p + p { transition-delay: 0.34s; }
       @media (min-width: 1024px) {
         /* columns 5 to 8 of the 12-col grid (40px margins, 48px gutters) */
         html:not(.is-mobile) #info-view .info-in { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
       }
-      .info-open #info-view { opacity: 1; visibility: visible; transition: opacity 0.45s ease, visibility 0s; }
-      .info-open #info-view p { opacity: 1; transform: none; }
+      .info-open #info-view { opacity: 1; visibility: visible; }
       /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
       html.info-open textarea { caret-color: transparent !important; }
       /* colour changes are instant, and the text field has no box of its own (it shows the page colour) */
@@ -546,33 +549,45 @@
       var vv = window.visualViewport;
       if (mobile) {
       function layout() {
+        var h = vv ? vv.height : window.innerHeight, t = vv ? vv.offsetTop : 0;
+        /* the controls layer = the visible area, always (not only while a keyboard is up) */
+        root.style.setProperty('--ui-h', h + 'px');
+        root.style.setProperty('--ui-top', t + 'px');
         var kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
         if (kb > 80) {
-          /* keyboard up: pin the writing area to the visible viewport */
+          /* keyboard up: pin the writing area to the visible viewport, no safe-area under the keyboard */
           root.style.setProperty('--vvh', vv.height + 'px');
           root.style.setProperty('--vvt', vv.offsetTop + 'px');
-          root.style.setProperty('--keyboard-offset', kb + 'px');
           root.style.setProperty('--sab', '0px');
         } else {
-          /* no keyboard: static CSS (100dvh, env(safe-area-*)) already lays everything out, no JS shift */
-          ['--vvh', '--vvt', '--keyboard-offset', '--sab'].forEach(function (k) { root.style.removeProperty(k); });
+          /* no keyboard: static CSS (100dvh, env(safe-area-*)) lays the writing area out */
+          ['--vvh', '--vvt', '--sab'].forEach(function (k) { root.style.removeProperty(k); });
         }
         if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
       }
       if (vv) { vv.addEventListener('resize', layout); vv.addEventListener('scroll', layout); }
-      window.addEventListener('resize', layout); layout();
-      /* iOS often reports a stale visual viewport when the keyboard closes (the last resize event is late or missing), which left the dock
-         floating in the middle of the screen. When the writing field loses focus: reset the scroll, force a viewport resize and
-         re-measure a few times while the keyboard animates away. */
-      function settle() {
-        window.scrollTo(0, 0);
-        if (vv) vv.dispatchEvent(new Event('resize'));
-        layout();
+      window.addEventListener('resize', layout); window.addEventListener('scroll', layout, { passive: true });
+      window.addEventListener('orientationchange', function () { watch(1500); });
+      /* iOS: the resize event for a closing keyboard can be late or missing, so measure on a short timer while the
+         writing field has focus and for a moment after it loses it (and after touches / returning to the tab). */
+      var poll = null, pollUntil = 0;
+      function watch(ms) {
+        pollUntil = Math.max(pollUntil, Date.now() + ms);
+        if (poll) return;
+        poll = setInterval(function () {
+          layout();
+          if (Date.now() > pollUntil && !(document.activeElement && document.activeElement.tagName === 'TEXTAREA')) { clearInterval(poll); poll = null; }
+        }, 100);
       }
+      function settle() { window.scrollTo(0, 0); if (vv) vv.dispatchEvent(new Event('resize')); layout(); }
+      document.addEventListener('focus', function (e) { if (e.target && e.target.tagName === 'TEXTAREA') watch(1500); }, true);
       document.addEventListener('blur', function (e) {
         if (!e.target || e.target.tagName !== 'TEXTAREA') return;
-        settle(); [60, 160, 320, 600, 1000].forEach(function (ms) { setTimeout(settle, ms); });
+        settle(); [60, 160, 320, 600, 1000].forEach(function (ms) { setTimeout(settle, ms); }); watch(2500);
       }, true);
+      document.addEventListener('touchend', function () { watch(800); }, { passive: true, capture: true });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) watch(1500); });
+      layout();
       /* The engine never resumes its AudioContext, so mobile browsers keep it suspended (no sound).
          Resume it inside real gestures, and open a "playback" audio session so the iOS silent switch doesn't mute it. */
       var silent = null, sessionSet = false, tries = 0, done = false;
