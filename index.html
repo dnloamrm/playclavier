@@ -218,7 +218,7 @@
       /* Controls: a "+" button bottom-left (opens/closes the tools dock), an "i" button bottom-right (Info) and a central
          dock (PLAY / AUTO-JAM / NEW). Square buttons, 6px corners, thin border; 40px from the grid margins (20px on mobile). */
       html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; --block-gap: 24px; }
-      html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; }
+      html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; --gap: var(--block-gap); }   /* every vertical distance between button rows is the same 24px */
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
       /* phones: the layer follows the VISUAL viewport (set live from JS): same height, same offset, GPU-translated */
       .is-mobile #ui { inset: auto; left: 0; top: 0; width: 100%; height: var(--ui-h, 100dvh); transform: translate3d(0, var(--ui-top, 0px), 0); }   /* passive: only the buttons take clicks */
