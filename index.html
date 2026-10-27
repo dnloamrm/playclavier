@@ -144,13 +144,6 @@
       })();
     </script>
     <script>
-      /* The copyright year follows the calendar: it becomes the new year at 00:00 on January 1st (visitor's local time), also in a tab left open. */
-      (function () {
-        function year() { var y = document.getElementById('year'), n = String(new Date().getFullYear()); if (y && y.textContent !== n) y.textContent = n; }
-        document.addEventListener('DOMContentLoaded', year);
-        document.addEventListener('visibilitychange', year);
-        setInterval(year, 60000);
-      })();
       /* Info view controller (runs before first paint so /#info opens instantly). */
       (function () {
         var ua = navigator.userAgent, safari = /iPad|iPhone|iPod/.test(ua) || (/^((?!chrome|android|crios|fxios).)*safari/i.test(ua));
@@ -351,26 +344,18 @@
         scrollbar-width: none; outline: none;
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: 0; width: 100%; text-align: left; flex: 1 0 auto; display: flex; flex-direction: column; }   /* top-left, like the home text; grows so the credits can sit at the bottom */
+      #info-view .info-in { margin: 0; width: 100%; text-align: left; }   /* top-left, like the home text */
       #info-view p {
         margin: 0 0 28px;
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
       }
       #info-view p:last-child { margin-bottom: 0; }
-      /* credits: pinned to the bottom, near the dock. Desktop: (c) on 2 columns, the typeset / design lines on 4, (c) aligned to their bottom line. Phones stack them. */
-      #info-view .credits { margin-top: auto; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 48px; row-gap: 28px; align-items: start; }
-      #info-view .credits p { margin: 0; }
-      #info-view .credits p:first-child { grid-column: 1 / span 2; align-self: end; }   /* (c) sits on the bottom line, level with the last credits line */
-      #info-view .credits p:last-child { grid-column: 3 / span 4; }
-      .is-mobile #info-view .credits { display: block; }
-      .is-mobile #info-view .credits p:first-child { margin-bottom: 28px; }
-      @media (max-width: 1023px) { #info-view .credits { display: block; } #info-view .credits p:first-child { margin-bottom: 28px; } }
       /* the opening sentence is set exactly like the piano text: same face, size, leading and tracking */
       #info-view p.lead { font-family: "Arizona Text", serif; font-size: 56px; line-height: normal; letter-spacing: 1px; margin-bottom: 56px; }
       .is-mobile #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; }
       @media (max-width: 767px) { #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; } }
       @media (min-width: 1024px) {
-        /* the opening sentence spans 6 columns of the 12-col grid (40px margins, 48px gutters); the small text sits at the left margin below it */
+        /* the opening sentence spans 6 columns of the 12-col grid (40px margins, 48px gutters); the second block follows after a paragraph gap */
         html:not(.is-mobile) #info-view p.lead { width: calc((100vw - 80px - 11 * 48px) / 12 * 6 + 5 * 48px); }
       }
       .info-open #info-view { opacity: 1; visibility: visible; }
@@ -421,7 +406,7 @@
     <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><svg class="p" viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg><svg class="x" viewBox="0 -960 960 960" aria-hidden="true"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></button>
     <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
   </div>
-  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><div class="credits"><p>© Clavier <span id="year">2026</span></p><p>Typeset in ABC Arizona, Dinamo Foundry<br>Design and Code by Danilo Amorim</p></div></div></section>
+  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Designer Danilo Amorim.</p></div></section>
   <script>
     (function () {
       var ua = navigator.userAgent || '';
