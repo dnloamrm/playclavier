@@ -10,14 +10,29 @@
   function lum(h) { var c = rgb(h).map(function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
   function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
   function mix(a, b, t) { var x = rgb(a), y = rgb(b); return hex([0, 1, 2].map(function (i) { return x[i] * t + y[i] * (1 - t); })); }
-  function auto(bg) { return lum(bg) > .4 ? '#171A1C' : '#F9FAFA'; }
+  var LEGIBLE = 4.5;
+  function best(against, list) {   /* first colour of the list that reads well on `against`, else the one that reads best */
+    var pick = list[0], top = 0;
+    for (var i = 0; i < list.length; i++) { var r = ratio(list[i], against); if (r >= LEGIBLE) return list[i]; if (r > top) { top = r; pick = list[i]; } }
+    return pick;
+  }
+  /* placeholder: white or black laid over the background colour (so it stays in that colour's family), just strong enough to be read (>= 3.1:1) */
+  function phColor(bg) {
+    var out = null, bestT = 2;
+    ['#FFFFFF', '#000000'].forEach(function (target) {
+      for (var t = .04; t <= 1.001; t += .02) { var c = mix(target, bg, t); if (ratio(c, bg) >= 3.1) { if (t < bestT) { bestT = t; out = c; } break; } }
+    });
+    return out || auto(bg);
+  }
+  function auto(bg) { return best(bg, ['#F9FAFA', '#171A1C', '#FFFFFF', '#000000']); }
+  function autoBg(fg) { return best(fg, ['#0B0D0E', '#F9FAFA', '#FFFFFF', '#000000']); }
   function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
   function apply(c) {
     var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-ui', '--c-stroke', '--c-ph', '--bgColor', '--textColor'];
     c = c || {};
     if (!c.bg && !c.fg) { names.forEach(function (n) { s.removeProperty(n); }); meta(D.bg); return; }
     var bg = c.bg || D.bg, fg = c.fg || (c.bg ? auto(bg) : D.fg), ui = ratio(fg, bg) >= 3 ? fg : auto(bg);   /* buttons stay readable whatever is picked */
-    var v = { '--c-bg': bg, '--c-fg': fg, '--c-ui': ui, '--c-stroke': mix(ui, bg, .32), '--c-ph': mix(fg, bg, .14), '--bgColor': bg, '--textColor': fg };
+    var v = { '--c-bg': bg, '--c-fg': fg, '--c-ui': ui, '--c-stroke': mix(ui, bg, .32), '--c-ph': phColor(bg), '--bgColor': bg, '--textColor': fg };
     for (var k in v) s.setProperty(k, v[k]);
     meta(bg);
   }
@@ -27,7 +42,7 @@
     if (!c && localStorage.getItem('clavier-theme') === 'light') c = { bg: '#F9FAFA', fg: '#171A1C' };   /* the old light mode */
   } catch (e) {}
   window.__colors = c || {};
-  window.__colorUtil = { apply: apply, ratio: ratio, lum: lum };
+  window.__colorUtil = { apply: apply, ratio: ratio, lum: lum, phColor: phColor, auto: auto, autoBg: autoBg, D: D, LEGIBLE: LEGIBLE };
   apply(window.__colors);
 })();
 </script>
@@ -150,7 +165,7 @@
       #ui button {
         pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-ui, #F9FAFA); background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
-        -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
       }
       #ui .corner {
         position: fixed; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
@@ -176,13 +191,10 @@
       #ui .blk button + button { border-left: 1px solid var(--c-stroke, #505962); }
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
-      #ui .blk button:hover { color: #fff; }
-      #ui button:focus-visible { outline: 2px solid var(--c-ui, #F9FAFA); outline-offset: 3px; }
       .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
-      /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip */
+      /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip. No hover / pressed / focus states anywhere. */
       #ui #colors button { width: var(--btn); padding: 0; display: flex; align-items: center; justify-content: center; }
       #ui #colors svg { width: 20px; height: 20px; fill: var(--c-ui, #F9FAFA); display: block; }
-      #ui #colors button[aria-pressed="true"] { background: color-mix(in srgb, var(--c-ui, #F9FAFA) 14%, transparent); }
       #ui { --sw: 40px; }
       #ui #palette {
         position: fixed; left: 50%; transform: translateX(-50%);
@@ -193,7 +205,7 @@
       }
       .tools-open.palette-open #ui #palette { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
       #ui #palette button { position: relative; width: var(--sw); height: var(--sw); padding: 0; border: 0; border-radius: 0; background: var(--sw-c); }
-      #ui #palette button.none { background: repeating-linear-gradient(135deg, #000 0 3px, #4a4a4a 3px 4px); }
+      #ui #palette button.none { background: #000; }   /* flat black = back to the default colours */
       #ui #palette button[aria-selected="true"]::after {
         content: ""; position: absolute; inset: 0; margin: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--dot);
       }
@@ -583,7 +595,14 @@
       textBtn.addEventListener('click', function () { openMode('fg'); });
       palette.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b || !mode) return;
-        var n = { bg: cur.bg, fg: cur.fg }; n[mode] = b.getAttribute('data-c') || null; setColors(n);
+        var n = { bg: cur.bg, fg: cur.fg }; n[mode] = b.getAttribute('data-c') || null;
+        /* text and background must always contrast: the colour just picked stays, the other one is changed automatically */
+        var bgE = n.bg || CU.D.bg, fgE = n.fg || (n.bg ? CU.auto(bgE) : CU.D.fg);
+        if (CU.ratio(fgE, bgE) < CU.LEGIBLE) {
+          if (mode === 'bg') n.fg = null;                              /* auto text colour */
+          else { var nb = CU.autoBg(fgE); n.bg = (nb === CU.D.bg) ? null : nb; }
+        }
+        setColors(n);
       });
       document.getElementById('t-rand').addEventListener('click', function () {
         var base = PAL.filter(Boolean), pool = base.concat(['#0B0D0E', '#F9FAFA', '#171A1C']);
