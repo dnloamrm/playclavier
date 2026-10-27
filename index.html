@@ -1,16 +1,10 @@
 <!doctype html>
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head><script>
-/* Colours. The page is made of ROLES, each with its own colour and its own contrast rule against what it sits on:
-     bg      page background
-     fg      typed text + caret                       >= 4.5:1 on bg
-     label   button labels (PLAY, AUTO-JAM, NEW)      >= 4.5:1 on bg
-     icon    icons (+, i, fill, text, randomize)      >= 4.5:1 on bg
-     stroke  borders and dividers                     >= 3:1   on bg
-     info    text of the Info page (on the glass)     >= 4.5:1 on bg AND on the glass tint of the typed text behind it
-     ph      placeholder                              >= 3.1:1 on bg
-   The user can paint bg / fg by hand (the other colours then follow automatically) or press Randomize for a complementary
-   composition. Everything is saved in localStorage and applied here, before the first paint. No saved colours = default dark. */
+/* Colours: three semantic tokens (--c-bg page, --c-surface borders/containers, --c-fg every foreground element).
+   The user can paint bg / fg by hand, or press Randomize for a harmonic composition; contrast is always enforced
+   (fg >= 4.5:1 on bg, surface >= 3:1, placeholder >= 3.1:1). Saved in localStorage and applied here, before the first paint.
+   No saved colours = the default dark theme. */
 (function () {
   var D = { bg: '#0B0D0E', fg: '#F9FAFA' };
   var PAL = ['#FFFFFF', null, '#EEE6E1', '#CFBFAC', '#4B2A28', '#866A4A', '#AC966A', '#F8E869', '#E3954A', '#D95736', '#8A1D34',
@@ -72,8 +66,11 @@
     { n: 'analogous + accent', h: [30, 330, 180, 15] }
   ];
   function hueGap(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
-  /* a creative composition: the background comes from the palette, text / labels / icons / stroke are different harmonic colours,
-     every one solved against the real backdrop it sits on so the contrast rules above always hold */
+  /* a creative composition. Three semantic tokens only:
+       --c-bg       page background (from the palette)
+       --c-surface  borders / containers (a second harmonic colour, >= 3:1 on bg)
+       --c-fg       ONE foreground colour: typed text, button labels, icons, Info text (>= 4.5:1 on bg, and on the Info glass tint)
+     fg is a different harmonic hue from the background, solved for contrast, so it is dark on light backgrounds and light on dark ones. */
   function compose(prev) {
     for (var tries = 0; tries < 80; tries++) {
       var base = PAL.filter(Boolean), bg = pickOne(base);
@@ -81,44 +78,39 @@
       var sc = pickOne(SCHEMES), dark = lum(bg) < .18, want = dark ? .74 : .26;
       var sat = function () { return .45 + Math.random() * .45; };
       var hs = sc.h.map(function (o) { return h0 + jit(o); });
-      var fg = solve(hs[0], sat() * .85, [bg], MIN.text, want + (Math.random() * .12 - .06));
-      var label = solve(hs[1], sat(), [bg], MIN.text, want + (Math.random() * .16 - .08));
-      var icon = solve(hs[2], sat(), [bg], MIN.text, want + (Math.random() * .16 - .08));
-      var stroke = solve(hs[3], sat() * .7, [bg], MIN.stroke, dark ? .45 : .62);
-      if (!fg || !label || !icon || !stroke) continue;
-      var glass = mix(fg, bg, .22);                       /* what the Info glass shows behind its text: the page tinted by the typed text */
-      var info = solve(hs[1], sat(), [bg, glass], MIN.text, want);
-      if (!info) continue;
-      /* the three main colours must really differ from each other (hue or lightness) */
-      var hl = [fg, label, icon].map(toHsl), distinct = true;
-      for (var i = 0; i < 3; i++) for (var j = i + 1; j < 3; j++) if (hueGap(hl[i][0], hl[j][0]) < 18 && Math.abs(hl[i][2] - hl[j][2]) < .1) distinct = false;
-      if (!distinct) continue;
+      var fg = null;
+      /* the Info glass tints the page with the text colour, so fg must also read on that tint */
+      [4.5, 4.9, 5.4, 6, 7, 8.5].some(function (min) {
+        var c = solve(hs[0], sat() * .85, [bg], min, want + (Math.random() * .12 - .06));
+        if (c && ratio(c, mix(c, bg, .22)) >= MIN.text) { fg = c; return true; }
+        return false;
+      });
+      var surface = solve(hs[3], sat() * .7, [bg], MIN.stroke, dark ? .45 : .62);
+      if (!fg || !surface) continue;
+      var a = toHsl(fg), b = toHsl(surface);
+      if (hueGap(a[0], b[0]) < 12 && Math.abs(a[2] - b[2]) < .12) continue;   /* surface must differ from fg */
       if (prev && prev.bg === bg && prev.fg === fg) continue;
-      return { bg: bg, fg: fg, label: label, icon: icon, stroke: stroke, info: info, scheme: sc.n };
+      return { bg: bg, fg: fg, surface: surface, scheme: sc.n };
     }
-    return { bg: '#223E27', fg: '#F8E869', label: '#B4CCB5', icon: '#CF9ED4', stroke: '#626F42', info: '#B4CCB5', scheme: 'fallback' };
+    return { bg: '#223E27', fg: '#F8E869', surface: '#626F42', scheme: 'fallback' };
   }
   function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
-  /* the full map of roles for a saved / chosen state (anything missing or too weak is derived or repaired) */
+  /* the full map for a saved / chosen state: anything missing or too weak is derived or repaired */
   function resolve(c) {
     c = c || {};
-    var bg = c.bg || D.bg, fg = c.fg || (c.bg ? auto(bg) : D.fg), ui = ratio(fg, bg) >= 3 ? fg : auto(bg);
-    function role(v, min, fallback) { return v && ratio(v, bg) >= min ? v : fallback; }
-    return {
-      bg: bg, fg: fg,
-      label: role(c.label, MIN.text, ui), icon: role(c.icon, MIN.text, ui),
-      stroke: role(c.stroke, MIN.stroke, mix(ui, bg, .32)),
-      info: role(c.info, MIN.text, fg), ph: phColor(bg)
-    };
+    var bg = c.bg || D.bg, fg = c.fg || (c.bg ? auto(bg) : D.fg);
+    if (ratio(fg, bg) < 3) fg = auto(bg);                       /* never an unreadable foreground */
+    var sf = c.surface || c.stroke;
+    return { bg: bg, fg: fg, surface: sf && ratio(sf, bg) >= MIN.stroke ? sf : mix(fg, bg, .32), ph: phColor(bg) };
   }
   function apply(c) {
-    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-label', '--c-icon', '--c-stroke', '--c-info', '--c-ph', '--bgColor', '--textColor'];
+    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-surface', '--c-ph', '--bgColor', '--textColor'];
     c = c || {};
     if (!c.bg && !c.fg) { names.forEach(function (n) { s.removeProperty(n); }); window.__colorMap = null; meta(D.bg); return; }
     var m = resolve(c);
-    var v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-label': m.label, '--c-icon': m.icon, '--c-stroke': m.stroke, '--c-info': m.info, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg };
+    var v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-surface': m.surface, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg };
     for (var k in v) s.setProperty(k, v[k]);
-    window.__colorMap = m;   /* the live role -> colour map */
+    window.__colorMap = m;   /* the live token map */
     meta(m.bg);
   }
   var c = null;
@@ -248,18 +240,18 @@
       html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; }
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }   /* passive: only the buttons take clicks */
       #ui button {
-        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-label, #F9FAFA); background: transparent;
+        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-fg, #F9FAFA); background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
       }
       #ui .corner {
         position: fixed; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
-        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-stroke, #505962); border-radius: 6px;
+        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-surface, #505962); border-radius: 6px;
         display: flex; align-items: center; justify-content: center;
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
       #ui #t-info { right: max(var(--edge), env(safe-area-inset-right, 0px)); }
-      #ui .corner svg { width: 20px; height: 20px; fill: var(--c-icon, #F9FAFA); display: block; }   /* Material Symbols, Sharp, filled */
+      #ui .corner svg { width: 20px; height: 20px; fill: currentColor; display: block; }   /* Material Symbols, Sharp, filled */
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
       #ui #dock {
@@ -268,24 +260,24 @@
         display: flex; gap: 12px; opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open #ui #dock { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-      #ui .blk { height: var(--btn); display: flex; border: 1px solid var(--c-stroke, #505962); border-radius: 6px; }
+      #ui .blk { height: var(--btn); display: flex; border: 1px solid var(--c-surface, #505962); border-radius: 6px; }
       #ui .blk button {
         height: 100%; padding: 0 24px; border: 0; border-radius: 0; line-height: 1;
         font-size: 15px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
       }
-      #ui .blk button + button { border-left: 1px solid var(--c-stroke, #505962); }
+      #ui .blk button + button { border-left: 1px solid var(--c-surface, #505962); }
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
       .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
       /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip. No hover / pressed / focus states anywhere. */
       #ui #colors button { width: var(--btn); padding: 0; display: flex; align-items: center; justify-content: center; }
-      #ui #colors svg { width: 20px; height: 20px; fill: var(--c-icon, #F9FAFA); display: block; }
+      #ui #colors svg { width: 20px; height: 20px; fill: currentColor; display: block; }
       #ui { --sw: 40px; }
       #ui #palette {
         position: fixed; left: 50%; transform: translateX(-50%);
         bottom: calc(var(--dock-b) + var(--btn) + 12px + var(--sab, 0px) + var(--keyboard-offset, 0px));
         display: flex; flex-wrap: wrap; box-sizing: border-box; overflow: hidden;
-        width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-stroke, #505962); border-radius: 6px;
+        width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-surface, #505962); border-radius: 6px;
         opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open.palette-open #ui #palette { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
@@ -352,7 +344,7 @@
          Glass background (translucent + blur), text centred in the 4 central columns, Arizona Sans 20/28, left aligned. */
       #info-view {
         position: fixed; inset: 0; z-index: 90;
-        background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-info, #F9FAFA);
+        background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);
         -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
         padding: calc(var(--dock-b) + var(--btn) + 32px) 40px; box-sizing: border-box;   /* clear of the buttons, centred on the screen */
         display: flex; flex-direction: column;
@@ -367,7 +359,7 @@
       #info-view .info-in { margin: auto; width: min(100%, 560px); text-align: left; }   /* margin:auto centres it and stays scrollable when it is taller than the screen */
       #info-view p {
         margin: 0 0 28px;
-        font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-info, #F9FAFA);
+        font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
         opacity: 0; transform: translateY(10px);
         transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
       }
@@ -397,6 +389,8 @@
       }
       /* mobile: the open dock sits in a row above the corner buttons, so the limit moves up with it */
       .is-mobile.tools-open textarea { --mb: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + 8px + 32px + var(--sab, 0px)); }
+      /* phones: the root is locked to the screen (no rubber-band scrolling in iOS Safari) */
+      html.is-mobile, html.is-mobile body { position: fixed; inset: 0; width: 100%; height: 100dvh; overflow: hidden; }
       .is-mobile .main-wrapper .main {
         position: fixed !important; left: 0 !important; top: var(--vvt, 0px) !important;
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
@@ -598,6 +592,18 @@
       }
       if (vv) { vv.addEventListener('resize', layout); vv.addEventListener('scroll', layout); }
       window.addEventListener('resize', layout); layout();
+      /* iOS often reports a stale visual viewport when the keyboard closes (the last resize event is late or missing), which left the dock
+         floating in the middle of the screen. When the writing field loses focus: reset the scroll, force a viewport resize and
+         re-measure a few times while the keyboard animates away. */
+      function settle() {
+        window.scrollTo(0, 0);
+        if (vv) vv.dispatchEvent(new Event('resize'));
+        layout();
+      }
+      document.addEventListener('blur', function (e) {
+        if (!e.target || e.target.tagName !== 'TEXTAREA') return;
+        settle(); [60, 160, 320, 600, 1000].forEach(function (ms) { setTimeout(settle, ms); });
+      }, true);
       /* The engine never resumes its AudioContext, so mobile browsers keep it suspended (no sound).
          Resume it inside real gestures, and open a "playback" audio session so the iOS silent switch doesn't mute it. */
       var silent = null, sessionSet = false, tries = 0, done = false;
@@ -670,7 +676,7 @@
         root.classList.toggle('palette-open', !!mode);
       }
       function setColors(c) {
-        cur = { bg: c.bg || null, fg: c.fg || null, label: c.label || null, icon: c.icon || null, stroke: c.stroke || null, info: c.info || null }; window.__colors = cur; CU.apply(cur);
+        cur = { bg: c.bg || null, fg: c.fg || null, surface: c.surface || null }; window.__colors = cur; CU.apply(cur);
         try { if (cur.bg || cur.fg) localStorage.setItem('clavier-colors', JSON.stringify(cur)); else localStorage.removeItem('clavier-colors'); localStorage.removeItem('clavier-theme'); } catch (e) {}
         paintSelection();
       }
@@ -689,7 +695,7 @@
         setColors(n);
       });
       document.getElementById('t-rand').addEventListener('click', function () {
-        setColors(CU.compose(cur));   /* a complementary composition: bg + text + labels + icons + stroke + info, all contrast-checked */
+        setColors(CU.compose(cur));   /* bg + one foreground colour + surface, harmonic and contrast-checked */
       });
       document.addEventListener('click', function (e) {   /* a click anywhere else puts the palette away */
         if (mode && !e.target.closest('#palette, #t-fill, #t-text')) { mode = null; paintSelection(); }
