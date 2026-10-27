@@ -254,6 +254,7 @@
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
       .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
+      @media (max-width: 340px) { .is-mobile #ui .blk button { padding: 0 8px; font-size: 12px; letter-spacing: .04em; } }   /* the narrowest phones keep the dock to two rows */
       /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip. No hover / pressed / focus states anywhere. */
       #ui { --sw: 40px; }
       #ui #palette {
