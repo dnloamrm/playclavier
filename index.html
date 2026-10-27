@@ -71,11 +71,10 @@
     return { bg: p[0], fg: p[1] };
   }
   function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
-  /* the full map for a saved / chosen state: anything missing or too weak is derived or repaired */
+  /* the full map for a saved / chosen state: an unset colour is the default one */
   function resolve(c) {
     c = c || {};
-    var bg = c.bg || D.bg, fg = c.fg || (c.bg ? auto(bg) : D.fg);
-    if (ratio(fg, bg) < 3) fg = auto(bg);                       /* never an unreadable foreground */
+    var bg = c.bg || D.bg, fg = c.fg || D.fg;                    /* free choice: an unset colour is the default one, never derived from the other */
     return { bg: bg, fg: fg, ph: phColor(bg) };
   }
   function apply(c) {
@@ -692,12 +691,7 @@
       palette.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b || !mode) return;
         var n = { bg: cur.bg, fg: cur.fg }; n[mode] = b.getAttribute('data-c') || null;
-        /* text and background must always contrast: the colour just picked stays, the other one is changed automatically */
-        var bgE = n.bg || CU.D.bg, fgE = n.fg || (n.bg ? CU.auto(bgE) : CU.D.fg);
-        if (CU.ratio(fgE, bgE) < CU.LEGIBLE) {
-          if (mode === 'bg') n.fg = null;                              /* auto text colour */
-          else { var nb = CU.autoBg(fgE); n.bg = (nb === CU.D.bg) ? null : nb; }
-        }
+        /* free choice: background and text colour are picked independently, nothing is adjusted behind the user's back */
         setColors(n);
       });
       document.getElementById('t-rand').addEventListener('click', function () {
