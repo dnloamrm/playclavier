@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head><script>
-/* Colours: three semantic tokens (--c-bg page, --c-surface borders/containers, --c-fg every foreground element).
-   The user can paint bg / fg by hand, or press Randomize for a harmonic composition; contrast is always enforced
-   (fg >= 4.5:1 on bg, surface >= 3:1, placeholder >= 3.1:1). Saved in localStorage and applied here, before the first paint.
+/* Colours. The interface = ONE foreground colour (typography, borders, icons, labels), the background, and the placeholder
+   (100% black or white with a 20% overlay). The user can paint bg / fg by hand, or press Randomize for a harmonic composition;
+   fg always contrasts with bg (>= 4.5:1). Saved in localStorage and applied here, before the first paint.
    No saved colours = the default dark theme. */
 (function () {
   var D = { bg: '#0B0D0E', fg: '#F9FAFA' };
@@ -33,14 +33,8 @@
   }
   function auto(bg) { return best(bg, ['#F9FAFA', '#171A1C', '#FFFFFF', '#000000']); }
   function autoBg(fg) { return best(fg, ['#0B0D0E', '#F9FAFA', '#FFFFFF', '#000000']); }
-  /* placeholder: white or black laid over the background colour (stays in that colour's family), just strong enough to be read */
-  function phColor(bg) {
-    var out = null, bestT = 2;
-    ['#FFFFFF', '#000000'].forEach(function (target) {
-      for (var t = .04; t <= 1.001; t += .02) { var c = mix(target, bg, t); if (ratio(c, bg) >= MIN.ph) { if (t < bestT) { bestT = t; out = c; } break; } }
-    });
-    return out || auto(bg);
-  }
+  /* placeholder: 100% black or white (whichever contrasts more with the background) laid over it as a 20% overlay */
+  function phColor(bg) { return mix(ratio('#FFFFFF', bg) >= ratio('#000000', bg) ? '#FFFFFF' : '#000000', bg, .2); }
   /* a colour of hue h / saturation s that reads on every background in `bgs` (>= min), lightness as close to `want` as possible;
      if the hue cannot get there, it is desaturated step by step */
   function solve(h, s, bgs, min, want) {
@@ -66,33 +60,29 @@
     { n: 'analogous + accent', h: [30, 330, 180, 15] }
   ];
   function hueGap(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
-  /* a creative composition. Three semantic tokens only:
-       --c-bg       page background (from the palette)
-       --c-surface  borders / containers (a second harmonic colour, >= 3:1 on bg)
-       --c-fg       ONE foreground colour: typed text, button labels, icons, Info text (>= 4.5:1 on bg, and on the Info glass tint)
-     fg is a different harmonic hue from the background, solved for contrast, so it is dark on light backgrounds and light on dark ones. */
+  /* a creative composition. The interface is made of:
+       bg   page background (from the palette)
+       fg   ONE colour for the typography, the borders, the icons and the labels (a different harmonic hue, >= 4.5:1 on bg
+            and on the Info glass tint; dark on light backgrounds, light on dark ones)
+       ph   the placeholder, derived from bg: 100% black or white with a 20% overlay                                        */
+  var HUES = [180, 150, 210, 120, 240, 90, 270, 30, 330];
   function compose(prev) {
     for (var tries = 0; tries < 80; tries++) {
       var base = PAL.filter(Boolean), bg = pickOne(base);
       var hsl = toHsl(bg), h0 = hsl[1] < .1 ? Math.random() * 360 : hsl[0];
-      var sc = pickOne(SCHEMES), dark = lum(bg) < .18, want = dark ? .74 : .26;
-      var sat = function () { return .45 + Math.random() * .45; };
-      var hs = sc.h.map(function (o) { return h0 + jit(o); });
+      var dark = lum(bg) < .18, want = dark ? .74 : .26, h = h0 + jit(pickOne(HUES));
       var fg = null;
       /* the Info glass tints the page with the text colour, so fg must also read on that tint */
       [4.5, 4.9, 5.4, 6, 7, 8.5].some(function (min) {
-        var c = solve(hs[0], sat() * .85, [bg], min, want + (Math.random() * .12 - .06));
+        var c = solve(h, .5 + Math.random() * .4, [bg], min, want + (Math.random() * .12 - .06));
         if (c && ratio(c, mix(c, bg, .22)) >= MIN.text) { fg = c; return true; }
         return false;
       });
-      var surface = solve(hs[3], sat() * .7, [bg], MIN.stroke, dark ? .45 : .62);
-      if (!fg || !surface) continue;
-      var a = toHsl(fg), b = toHsl(surface);
-      if (hueGap(a[0], b[0]) < 12 && Math.abs(a[2] - b[2]) < .12) continue;   /* surface must differ from fg */
+      if (!fg) continue;
       if (prev && prev.bg === bg && prev.fg === fg) continue;
-      return { bg: bg, fg: fg, surface: surface, scheme: sc.n };
+      return { bg: bg, fg: fg };
     }
-    return { bg: '#223E27', fg: '#F8E869', surface: '#626F42', scheme: 'fallback' };
+    return { bg: '#223E27', fg: '#F8E869' };
   }
   function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
   /* the full map for a saved / chosen state: anything missing or too weak is derived or repaired */
@@ -100,17 +90,16 @@
     c = c || {};
     var bg = c.bg || D.bg, fg = c.fg || (c.bg ? auto(bg) : D.fg);
     if (ratio(fg, bg) < 3) fg = auto(bg);                       /* never an unreadable foreground */
-    var sf = c.surface || c.stroke;
-    return { bg: bg, fg: fg, surface: sf && ratio(sf, bg) >= MIN.stroke ? sf : mix(fg, bg, .32), ph: phColor(bg) };
+    return { bg: bg, fg: fg, ph: phColor(bg) };
   }
   function apply(c) {
-    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-surface', '--c-ph', '--bgColor', '--textColor'];
+    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-ph', '--bgColor', '--textColor'];
     c = c || {};
     if (!c.bg && !c.fg) { names.forEach(function (n) { s.removeProperty(n); }); window.__colorMap = null; meta(D.bg); return; }
     var m = resolve(c);
-    var v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-surface': m.surface, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg };
+    var v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg };
     for (var k in v) s.setProperty(k, v[k]);
-    window.__colorMap = m;   /* the live token map */
+    window.__colorMap = m;   /* the live map: bg, fg, ph */
     meta(m.bg);
   }
   var c = null;
@@ -246,7 +235,7 @@
       }
       #ui .corner {
         position: fixed; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
-        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-surface, #505962); border-radius: 6px;
+        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
         display: flex; align-items: center; justify-content: center;
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
@@ -260,12 +249,12 @@
         display: flex; gap: 12px; opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open #ui #dock { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-      #ui .blk { height: var(--btn); display: flex; border: 1px solid var(--c-surface, #505962); border-radius: 6px; }
+      #ui .blk { height: var(--btn); display: flex; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px; }
       #ui .blk button {
         height: 100%; padding: 0 24px; border: 0; border-radius: 0; line-height: 1;
         font-size: 15px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
       }
-      #ui .blk button + button { border-left: 1px solid var(--c-surface, #505962); }
+      #ui .blk button + button { border-left: 1px solid var(--c-fg, #F9FAFA); }
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
       .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
@@ -277,7 +266,7 @@
         position: fixed; left: 50%; transform: translateX(-50%);
         bottom: calc(var(--dock-b) + var(--btn) + 12px + var(--sab, 0px) + var(--keyboard-offset, 0px));
         display: flex; flex-wrap: wrap; box-sizing: border-box; overflow: hidden;
-        width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-surface, #505962); border-radius: 6px;
+        width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
         opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open.palette-open #ui #palette { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
@@ -314,7 +303,7 @@
         caret-color: var(--c-fg, #F9FAFA) !important;
       }
       textarea::placeholder {
-        color: var(--c-ph, #202427) !important;
+        color: var(--c-ph, #3C3D3E) !important;   /* default theme: white at 20% over #0B0D0E */
         opacity: 1 !important;
       }
       /* Writing area: 40px on every side; the left side also clears the FAB column (40 + 60 + 40) */
@@ -676,7 +665,7 @@
         root.classList.toggle('palette-open', !!mode);
       }
       function setColors(c) {
-        cur = { bg: c.bg || null, fg: c.fg || null, surface: c.surface || null }; window.__colors = cur; CU.apply(cur);
+        cur = { bg: c.bg || null, fg: c.fg || null }; window.__colors = cur; CU.apply(cur);
         try { if (cur.bg || cur.fg) localStorage.setItem('clavier-colors', JSON.stringify(cur)); else localStorage.removeItem('clavier-colors'); localStorage.removeItem('clavier-theme'); } catch (e) {}
         paintSelection();
       }
@@ -695,7 +684,7 @@
         setColors(n);
       });
       document.getElementById('t-rand').addEventListener('click', function () {
-        setColors(CU.compose(cur));   /* bg + one foreground colour + surface, harmonic and contrast-checked */
+        setColors(CU.compose(cur));   /* bg + one foreground colour, harmonic and contrast-checked */
       });
       document.addEventListener('click', function (e) {   /* a click anywhere else puts the palette away */
         if (mode && !e.target.closest('#palette, #t-fill, #t-text')) { mode = null; paintSelection(); }
