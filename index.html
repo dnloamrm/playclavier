@@ -347,6 +347,10 @@
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
       }
       #info-view p:last-child { margin-bottom: 0; }
+      /* the opening sentence is set exactly like the piano text: same face, size, leading and tracking */
+      #info-view p.lead { font-family: "Arizona Text", serif; font-size: 56px; line-height: normal; letter-spacing: 1px; margin-bottom: 56px; }
+      .is-mobile #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; }
+      @media (max-width: 767px) { #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; } }
       @media (min-width: 1024px) {
         /* columns 5 to 8 of the 12-col grid (40px margins, 48px gutters) */
         html:not(.is-mobile) #info-view .info-in { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
@@ -400,7 +404,7 @@
     <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><svg class="p" viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg><svg class="x" viewBox="0 -960 960 960" aria-hidden="true"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></button>
     <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
   </div>
-  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim with Claude.</p><p>Typography: ABC Arizona by Dinamo.</p></div></section>
+  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>© Clavier 2026</p><p>Typeset in ABC Arizona, Dinamo Foundry<br>Design and Code by Danilo Amorim</p></div></section>
   <script>
     (function () {
       var ua = navigator.userAgent || '';
