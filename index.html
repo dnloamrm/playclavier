@@ -182,10 +182,11 @@
       textarea {
         --m: 40px;
         --ml: 140px;
-        margin: var(--m) var(--m) var(--m) var(--ml) !important;
+        --lim: calc(var(--dock-b) + var(--btn) + 32px);   /* the text never runs closer than 32px to the buttons: it scrolls instead */
+        margin: var(--m) var(--m) var(--lim) var(--ml) !important;
         padding: 0 !important;
         width: calc(100% - var(--ml) - var(--m)) !important;
-        height: calc(100dvh - var(--m) * 2) !important;
+        height: calc(100dvh - var(--m) - var(--lim)) !important;
         box-sizing: border-box !important;
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
@@ -232,13 +233,15 @@
       .is-mobile textarea {
         --mx: var(--edge);
         --mt: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px);
-        --mb: calc(var(--dock-b) + var(--btn) + 20px + var(--sab, 0px));
+        --mb: calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px));
         margin: var(--mt) max(var(--mx), env(safe-area-inset-right, 0px)) 0 max(var(--mx), env(safe-area-inset-left, 0px)) !important;
         padding: 0 0 var(--mb) 0 !important;
         width: calc(100% - max(var(--mx), env(safe-area-inset-left, 0px)) - max(var(--mx), env(safe-area-inset-right, 0px))) !important;
         height: calc(var(--vvh, 100dvh) - var(--mt)) !important;
         font-size: 40px !important; line-height: 1.25 !important;
       }
+      /* mobile: the open dock sits in a row above the corner buttons, so the limit moves up with it */
+      .is-mobile.tools-open textarea { --mb: calc(var(--dock-b) + var(--btn) * 2 + var(--gap) + 32px + var(--sab, 0px)); }
       .is-mobile .main-wrapper .main {
         position: fixed !important; left: 0 !important; top: var(--vvt, 0px) !important;
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
