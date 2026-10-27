@@ -335,7 +335,7 @@
         position: fixed; inset: 0; z-index: 90;
         background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);
         -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
-        padding: calc(var(--dock-b) + var(--btn) + 32px) 40px; box-sizing: border-box;   /* clear of the buttons, centred on the screen */
+        padding: 40px 40px calc(var(--dock-b) + var(--btn) + 32px); box-sizing: border-box;   /* starts at the same top-left as the home text, stays clear of the buttons */
         display: flex; flex-direction: column;
         font-family: "Arizona Sans", sans-serif; font-weight: 400;
         opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
@@ -344,7 +344,7 @@
         scrollbar-width: none; outline: none;
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: auto; width: min(100%, 560px); text-align: left; }   /* margin:auto centres it and stays scrollable when it is taller than the screen */
+      #info-view .info-in { margin: 0; width: 100%; text-align: left; }   /* top-left, like the home text */
       #info-view p {
         margin: 0 0 28px;
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
@@ -355,8 +355,8 @@
       .is-mobile #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; }
       @media (max-width: 767px) { #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; } }
       @media (min-width: 1024px) {
-        /* columns 5 to 8 of the 12-col grid (40px margins, 48px gutters) */
-        html:not(.is-mobile) #info-view .info-in { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
+        /* the opening sentence spans 6 columns of the 12-col grid (40px margins, 48px gutters); the small text sits at the left margin below it */
+        html:not(.is-mobile) #info-view p.lead { width: calc((100vw - 80px - 11 * 48px) / 12 * 6 + 5 * 48px); }
       }
       .info-open #info-view { opacity: 1; visibility: visible; }
       /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
@@ -384,9 +384,8 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));
+        padding: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text */
       }
-      .is-mobile #info-view .info-in { width: 100%; }   /* on a phone the 4 central columns are the whole width */
     </style>
   </head>
   <body>
