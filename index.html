@@ -115,21 +115,6 @@
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
         var root = document.documentElement;
-        /* Story export: whatever reaches the speakers is also copied into a MediaStream (window.__tap), so a clip can be recorded with sound.
-           Wraps connect() first; on phones the master chain below is layered on top and only its final node reaches the destination. */
-        (function () {
-          var taps = new WeakMap(), base = AudioNode.prototype.connect;
-          AudioNode.prototype.connect = function (dest) {
-            if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode) {
-              try {
-                var ctx = dest.context, t = taps.get(ctx);
-                if (!t && ctx.createMediaStreamDestination) { t = ctx.createMediaStreamDestination(); taps.set(ctx, t); window.__tap = t; }
-                if (t) base.call(this, t);
-              } catch (e) {}
-            }
-            return base.apply(this, arguments);
-          };
-        })();
         if (mobile) { root.classList.add('is-mobile'); window.__audioConfig = 'audio/config.mobile.js'; }
         /* a narrow window gets the phone layout too (browser device emulation, resized windows), live: the class follows the width */
         var nq = window.matchMedia && window.matchMedia('(max-width: 820px)');
@@ -267,8 +252,8 @@
       #ui .blk button:only-child { border-radius: 5px; }
       .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
       /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip. No hover / pressed / focus states anywhere. */
-      #ui #colors button, #ui #t-story { width: var(--btn); padding: 0; display: flex; align-items: center; justify-content: center; }
-      #ui #colors svg, #ui #t-story svg { width: 20px; height: 20px; fill: currentColor; display: block; }
+      #ui #colors button { width: var(--btn); padding: 0; display: flex; align-items: center; justify-content: center; }
+      #ui #colors svg { width: 20px; height: 20px; fill: currentColor; display: block; }
       #ui { --sw: 40px; }
       #ui #palette {
         position: absolute; left: 50%; transform: translateX(-50%);
@@ -398,7 +383,7 @@
   <div id="ui">
     <div id="dock" role="toolbar" aria-label="Tools">
       <div class="blk"><button id="t-play" type="button">Play</button><button id="t-auto" type="button">Auto-jam</button></div>
-      <div class="blk"><button id="t-new" type="button">New</button><button id="t-story" type="button" aria-label="Export a video for Stories" title="Export a video for Stories"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M80-160v-640h80l80 160h120l-80-160h80l80 160h120l-80-160h80l80 160h120l-80-160h200v640H80Z"/></svg></button></div>
+      <div class="blk"><button id="t-new" type="button">New</button></div>
       <div class="blk" id="colors">
         <button id="t-fill" type="button" aria-pressed="false" aria-label="Background color" title="Background color"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="m247-904 57-56 400 400-304 304L96-560l247-248-96-96Zm153 153L209-560h382L400-751Zm360 471q-33 0-56.5-23.5T680-360q0-21 12.5-45t27.5-45q9-12 19-25t21-25q11 12 21 25t19 25q15 21 27.5 45t12.5 45q0 33-23.5 56.5T760-280ZM80 0v-160h800V0H80Z"/></svg></button>
         <button id="t-text" type="button" aria-pressed="false" aria-label="Text color" title="Text color"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M80 0v-160h800V0H80Zm140-280 210-560h100l210 560h-96l-50-144H368l-52 144h-96Zm176-224h168l-82-232h-4l-82 232Z"/></svg></button>
@@ -719,80 +704,6 @@
         if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
         if (wasInfo) { var ta = document.querySelector('textarea'); if (ta) ta.focus({ preventScroll: true }); }
       });
-      /* Stories: records ~10 s of the writing screen (typed text in the current colours, 1080x1920) with its sound, then shares / downloads it.
-         The canvas lives in memory only: it is never attached to the page. */
-      (function () {
-        var busy = false, W = 1080, H = 1920, SECONDS = 10;
-        function mime() {
-          var c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
-          for (var i = 0; i < c.length; i++) if (MediaRecorder.isTypeSupported(c[i])) return c[i];
-          return '';
-        }
-        function wrap(ctx, text, max) {
-          var out = [];
-          text.split('\n').forEach(function (para) {
-            var line = '';
-            para.split(' ').forEach(function (w) {
-              var t = line ? line + ' ' + w : w;
-              if (line && ctx.measureText(t).width > max) { out.push(line); line = w; } else line = t;
-            });
-            out.push(line);
-          });
-          return out;
-        }
-        function start() {
-          if (busy || !window.MediaRecorder) return;
-          var ta = document.querySelector('textarea'); if (!ta) return;
-          busy = true;
-          var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-          var ctx = cv.getContext('2d'), raf = 0, rec = null, vs = null, chunks = [], done = false;
-          var mt = mime(), fam = getComputedStyle(ta).fontFamily || 'serif';
-          function draw() {
-            var bg = getComputedStyle(document.body).backgroundColor, fg = getComputedStyle(ta).color;
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-            ctx.fillStyle = fg; ctx.textBaseline = 'top'; ctx.font = '400 68px ' + fam;
-            var lh = 86, top = 250, bottom = 340, lines = wrap(ctx, ta.value, W - 2 * 96), fit = Math.floor((H - top - bottom) / lh);
-            lines.slice(Math.max(0, lines.length - fit)).forEach(function (l, i) { ctx.fillText(l, 96, top + i * lh); });
-            raf = requestAnimationFrame(draw);
-          }
-          function finish() {
-            if (done) return; done = true;
-            cancelAnimationFrame(raf);
-            var blob = new Blob(chunks, { type: (rec && rec.mimeType) || mt || 'video/webm' });
-            if (vs) vs.getTracks().forEach(function (t) { t.stop(); });   /* the shared audio tap is left alone */
-            cv.width = cv.height = 0; cv = ctx = vs = rec = null;
-            if (blob.size) deliver(blob);
-            busy = false;
-          }
-          function deliver(blob) {
-            var ext = /mp4/.test(blob.type) ? 'mp4' : 'webm', file = new File([blob], 'clavier-story.' + ext, { type: blob.type });
-            function download() {
-              var u = URL.createObjectURL(blob), a = document.createElement('a');
-              a.href = u; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
-              setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
-            }
-            if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file] }).catch(download);
-            else download();
-          }
-          try {
-            document.fonts.load('68px ' + fam);
-            draw();
-            vs = cv.captureStream(60);
-            if (window.__tap) window.__tap.stream.getAudioTracks().forEach(function (t) { vs.addTrack(t); });
-            rec = new MediaRecorder(vs, mt ? { mimeType: mt, videoBitsPerSecond: 6000000 } : {});
-            rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
-            rec.onstop = finish; rec.onerror = finish;
-            rec.start(250);
-          } catch (e) { cancelAnimationFrame(raf); if (vs) vs.getTracks().forEach(function (t) { t.stop(); }); busy = false; return; }
-          /* what gets recorded: the typed text played back, or an Auto-jam when the field is empty */
-          if (!root.classList.contains('auto-on')) {
-            if (ta.value.trim()) { if (window.$nuxt) window.$nuxt.$emit('clavier-replay'); }
-            else if (window.__autoType) window.__autoType();
-          }
-          setTimeout(function () { if (rec && rec.state !== 'inactive') rec.stop(); else finish(); }, SECONDS * 1000);
-        }
-        document.getElementById('t-story').addEventListener('click', start);
-      })();
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setTools(false); });
       /* keep the keyboard up: buttons never steal focus from the text field */
       function keepFocus(e) { if (e.target.closest('#ui button')) e.preventDefault(); }
