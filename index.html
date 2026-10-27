@@ -597,7 +597,13 @@
          Resume it inside real gestures, and open a "playback" audio session so the iOS silent switch doesn't mute it. */
       var silent = null, sessionSet = false, tries = 0, done = false;
       function unlock() {
-        if (done) return;
+        if (done) {
+          /* already unlocked once: stay armed. If the system interrupted the audio since (share sheet, call, notification, lock screen),
+             take the next gesture to bring it back instead of staying silent for the rest of the session. */
+          var k0 = window.Klang && window.Klang.context;
+          if (k0 && k0.state === 'running' && silent && !silent.paused) return;
+          done = false; tries = 0;
+        }
         try {
           if (!sessionSet && navigator.audioSession) { navigator.audioSession.type = 'playback'; sessionSet = true; }
           var K = window.Klang, c = K && K.context;
@@ -622,7 +628,6 @@
           /* once everything is running, stop doing any work per event */
           if (c && c.state === 'running' && !silent.paused) {
             done = true;
-            ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'click', 'keydown', 'input'].forEach(function (n) { document.removeEventListener(n, unlock, true); });
           }
         } catch (e) {}
       }
