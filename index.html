@@ -129,7 +129,6 @@
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
       #ui #t-info { right: max(var(--edge), env(safe-area-inset-right, 0px)); }
-      #ui #t-theme { right: calc(max(var(--edge), env(safe-area-inset-right, 0px)) + var(--btn) + var(--gap)); }
       #ui .corner svg { width: 20px; height: 20px; fill: #F9FAFA; display: block; }   /* Material Symbols, Sharp, filled */
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
@@ -148,9 +147,12 @@
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
       #ui .blk button:hover { color: #fff; }
+      #ui #t-theme { width: var(--btn); padding: 0; display: flex; align-items: center; justify-content: center; }
+      #ui #t-theme svg { width: 20px; height: 20px; fill: #F9FAFA; display: block; }
       #ui button:focus-visible { outline: 2px solid #F9FAFA; outline-offset: 3px; }
       .is-mobile #ui #dock { bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px) + var(--keyboard-offset, 0px)); }
-      .is-mobile #ui .blk button { padding: 0 14px; font-size: 13px; letter-spacing: .06em; }
+      .is-mobile #ui .blk button { padding: 0 11px; font-size: 13px; letter-spacing: .06em; }
+      .is-mobile #ui #dock { gap: 8px; }   .is-mobile #ui #t-theme { padding: 0; }
       /* Text box inset: reset the legacy paddings so the grid below rules.
          Scoped with :has() so it only touches the home-page section/container
          and never the ModalWrapper instance (song picker, info, share), which
@@ -265,7 +267,7 @@
       html.light textarea::placeholder { color: #D8DBDF !important; }
       html.light #info-view p { color: #171A1C; }
       html.light #ui button { color: #171A1C; }
-      html.light #ui .corner svg { fill: #171A1C; }
+      html.light #ui .corner svg, html.light #ui #t-theme svg { fill: #171A1C; }
       html.light #ui .corner, html.light #ui .blk, html.light #ui .blk button + button { border-color: #C7CCD1; }
       html.light #ui .blk button:hover { color: #171A1C; }
       html.light #ui button:focus-visible { outline-color: #171A1C; }
@@ -277,9 +279,9 @@
     <div id="dock" role="toolbar" aria-label="Tools">
       <div class="blk"><button id="t-play" type="button">Play</button><button id="t-auto" type="button">Auto-jam</button></div>
       <div class="blk"><button id="t-new" type="button">New</button></div>
+      <div class="blk"><button id="t-theme" type="button" aria-pressed="false" aria-label="Switch to light mode"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M240-240v-480h480v480H240Z"/></svg></button></div>
     </div>
     <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><svg class="p" viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg><svg class="x" viewBox="0 -960 960 960" aria-hidden="true"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></button>
-    <button id="t-theme" class="corner" type="button" aria-pressed="false" aria-label="Switch to light mode"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M240-240v-480h480v480H240Z"/></svg></button>
     <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
   </div>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim with Claude.</p><p>Typography: ABC Arizona by Dinamo.</p></div></section>
