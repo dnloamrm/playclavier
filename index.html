@@ -118,7 +118,7 @@
       #more-fab {
         position: fixed; left: var(--edge); z-index: 100;
         bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
-        width: var(--btn); height: var(--btn); padding: 0; border: 0; border-radius: 50%;
+        width: var(--btn); height: var(--btn); padding: 0; border: 0; border-radius: 6px;
         background-color: #5F4E4E; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation;
@@ -160,7 +160,7 @@
         width: var(--btn) !important; height: var(--btn) !important;
         min-width: var(--btn) !important; min-height: var(--btn) !important;
         margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
-        border: 0 !important; border-radius: 50% !important;
+        border: 0 !important; border-radius: 6px !important;
         background-color: #5F4E4E !important; box-shadow: none !important;
         -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
@@ -236,6 +236,9 @@
       textarea::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
       /* Desktop: the text runs from column 2 to column 11 of a 12-col grid (40px margins, 48px gutters) */
       @media (min-width: 1024px) {
+        /* Info text sits on the same grid: starts at column 2 and spans 6 columns (half of the 12) */
+        html:not(.is-mobile) #info-view { padding-left: calc(40px + 48px + (100vw - 80px - 11 * 48px) / 12); }
+        html:not(.is-mobile) #info-view .info-in { width: calc((100vw - 80px - 11 * 48px) / 12 * 6 + 5 * 48px); }
         html:not(.is-mobile) textarea {
           --gx: calc(40px + 48px + (100vw - 80px - 11 * 48px) / 12);
           margin-left: var(--gx) !important;
