@@ -192,10 +192,10 @@
         -ms-overflow-style: none !important;
       }
       textarea::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-      /* Desktop: the text runs from column 2 to column 11 of a 12-col grid (40px margins, 48px gutters) */
+      /* Desktop: the text runs from column 1 to column 12 of a 12-col grid (40px margins, 48px gutters) */
       @media (min-width: 1024px) {
         html:not(.is-mobile) textarea {
-          --gx: calc(40px + 48px + (100vw - 80px - 11 * 48px) / 12);
+          --gx: 40px;   /* column 1 to column 12: edge to edge of the grid */
           margin-left: var(--gx) !important;
           margin-right: var(--gx) !important;
           width: calc(100vw - 2 * var(--gx)) !important;
