@@ -118,7 +118,7 @@
       html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; }
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }   /* passive: only the buttons take clicks */
       #ui button {
-        pointer-events: auto; font-family: "Arizona Sans", sans-serif; color: #F9FAFA; background: transparent;
+        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: #F9FAFA; background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation;
       }
@@ -208,7 +208,7 @@
         background-color: rgba(11, 13, 14, .8); color: #F9FAFA;
         padding: calc(var(--dock-b) + var(--btn) + 32px) 40px; box-sizing: border-box;   /* clear of the buttons, centred on the screen */
         display: flex; flex-direction: column;
-        font-family: "Arizona Sans", sans-serif;
+        font-family: "Arizona Sans", sans-serif; font-weight: 400;
         opacity: 0; visibility: hidden;
         transition: opacity 0.45s ease, visibility 0s linear 0.45s;
         height: 100vh; height: 100dvh;
@@ -219,7 +219,7 @@
       #info-view .info-in { margin: auto; width: min(100%, 560px); text-align: left; }   /* margin:auto centres it and stays scrollable when it is taller than the screen */
       #info-view p {
         margin: 0 0 28px;
-        font-size: 20px; line-height: 28px; letter-spacing: 0; color: #F9FAFA;
+        font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: #F9FAFA;
         opacity: 0; transform: translateY(10px);
         transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
       }
@@ -231,6 +231,8 @@
       }
       .info-open #info-view { opacity: 1; visibility: visible; transition: opacity 0.45s ease, visibility 0s; }
       .info-open #info-view p { opacity: 1; transform: none; }
+      /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
+      html.info-open textarea, html.light.info-open textarea { caret-color: transparent !important; }
       /* Mobile / touch layout (class set before first paint by the head script) */
       .is-mobile textarea {
         --mx: var(--edge);
@@ -535,8 +537,11 @@
         } else if (window.__autoType) window.__autoType();
       });
       document.getElementById('t-new').addEventListener('click', function () {
+        var wasInfo = root.classList.contains('info-open');
+        if (wasInfo && window.__closeInfo) window.__closeInfo();   /* NEW over Info: close it and get back to the writing screen */
         if (window.__autoStop) window.__autoStop();
         if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
+        if (wasInfo) { var ta = document.querySelector('textarea'); if (ta) ta.focus({ preventScroll: true }); }
       });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setTools(false); });
       /* keep the keyboard up: buttons never steal focus from the text field */
