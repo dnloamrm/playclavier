@@ -254,6 +254,7 @@
       /* Light mode: the same palette inverted (background #F9FAFA, text and icons #0B0D0E, stroke unchanged) */
       html.light { --bgColor: #F9FAFA; --textColor: #0B0D0E; }
       html body, html #__nuxt { transition: none !important; }   /* the theme switch is instant: no fade on the background */
+      html textarea { background-color: transparent !important; transition: none !important; }   /* no box of its own: it shows the page background in both themes */
       html.light, html.light body, html.light #__nuxt, html.light #info-view { background-color: #F9FAFA; color: #0B0D0E; }
       html.light textarea { caret-color: #0B0D0E !important; color: #0B0D0E !important; }
       html.light textarea::placeholder { color: #DFDBD8 !important; }
