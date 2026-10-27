@@ -194,8 +194,6 @@
       textarea::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
       /* Desktop: the text runs from column 2 to column 11 of a 12-col grid (40px margins, 48px gutters) */
       @media (min-width: 1024px) {
-                /* Info text takes columns 2 to 11, exactly like the Home text */
-        html:not(.is-mobile) #info-view { --gx: calc(40px + 48px + (100vw - 80px - 11 * 48px) / 12); padding-left: var(--gx); padding-right: var(--gx); }
         html:not(.is-mobile) textarea {
           --gx: calc(40px + 48px + (100vw - 80px - 11 * 48px) / 12);
           margin-left: var(--gx) !important;
@@ -203,13 +201,14 @@
           width: calc(100vw - 2 * var(--gx)) !important;
         }
       }
-      /* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive) */
+      /* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive).
+         Translucent background, text centred in the 4 central columns, Arizona Sans 20/28, left aligned. */
       #info-view {
         position: fixed; inset: 0; z-index: 90;
-        background-color: #0B0D0E; color: #F9FAFA;
-        padding: 40px 40px 40px 140px; box-sizing: border-box; /* same grid as the Home: text starts at the top-left */
+        background-color: rgba(11, 13, 14, .8); color: #F9FAFA;
+        padding: calc(var(--dock-b) + var(--btn) + 32px) 40px; box-sizing: border-box;   /* clear of the buttons, centred on the screen */
         display: flex; flex-direction: column;
-        font-family: "Arizona Text", serif;
+        font-family: "Arizona Sans", sans-serif;
         opacity: 0; visibility: hidden;
         transition: opacity 0.45s ease, visibility 0s linear 0.45s;
         height: 100vh; height: 100dvh;
@@ -217,15 +216,19 @@
         scrollbar-width: none; outline: none;
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: 0; width: 100%; text-align: left; }   /* same text box as the Home */
+      #info-view .info-in { margin: auto; width: min(100%, 560px); text-align: left; }   /* margin:auto centres it and stays scrollable when it is taller than the screen */
       #info-view p {
-        margin: 0 0 1.25em; max-width: 22em;
-        font-size: 36px; line-height: 1.2; letter-spacing: 1px; color: #F9FAFA;
+        margin: 0 0 28px;
+        font-size: 20px; line-height: 28px; letter-spacing: 0; color: #F9FAFA;
         opacity: 0; transform: translateY(10px);
         transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
       }
-      #info-view p + p { transition-delay: 0.22s; }
-      @media (min-width: 768px) { #info-view p { font-size: 56px; line-height: normal; max-width: none; } }   /* same size as the Home text */
+      #info-view p:last-child { margin-bottom: 0; }
+      #info-view p + p { transition-delay: 0.22s; } #info-view p + p + p { transition-delay: 0.34s; }
+      @media (min-width: 1024px) {
+        /* columns 5 to 8 of the 12-col grid (40px margins, 48px gutters) */
+        html:not(.is-mobile) #info-view .info-in { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
+      }
       .info-open #info-view { opacity: 1; visibility: visible; transition: opacity 0.45s ease, visibility 0s; }
       .info-open #info-view p { opacity: 1; transform: none; }
       /* Mobile / touch layout (class set before first paint by the head script) */
@@ -246,14 +249,15 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: max(clamp(32px, 9vw, 64px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + var(--sab, 0px) + 32px) max(var(--edge), env(safe-area-inset-left, 0px));
+        padding: calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));
       }
-      .is-mobile #info-view p { font-size: 40px; line-height: 1.25; max-width: none; }
+      .is-mobile #info-view .info-in { width: 100%; }   /* on a phone the 4 central columns are the whole width */
       /* Light mode: background #F9FAFA, stroke #C7CCD1, text and icons #171A1C, placeholder #D8DBDF */
       html.light { --bgColor: #F9FAFA; --textColor: #171A1C; }
       html body, html #__nuxt { transition: none !important; }   /* the theme switch is instant: no fade on the background */
       html textarea { background-color: transparent !important; transition: none !important; }   /* no box of its own: it shows the page background in both themes */
-      html.light, html.light body, html.light #__nuxt, html.light #info-view { background-color: #F9FAFA; color: #171A1C; }
+      html.light, html.light body, html.light #__nuxt { background-color: #F9FAFA; color: #171A1C; }
+      html.light #info-view { background-color: rgba(249, 250, 250, .8); color: #171A1C; }
       html.light textarea { caret-color: #171A1C !important; color: #171A1C !important; }
       html.light textarea::placeholder { color: #D8DBDF !important; }
       html.light #info-view p { color: #171A1C; }
@@ -285,7 +289,7 @@
     <button id="t-theme" class="corner" type="button" aria-pressed="false" aria-label="Switch to light mode"><svg class="dot" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/></svg></button>
     <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
   </div>
-  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim in pair programming with Claude.</p></div></section>
+  <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim in pair programming with Claude.</p><p>Typography: ABC Arizona by Dinamo.</p></div></section>
   <script>
     (function () {
       var ua = navigator.userAgent || '';
