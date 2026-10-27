@@ -238,7 +238,9 @@
       /* Info stays in the right corner but belongs to the expanded state: it shows and collapses together with the tools */
       #ui #t-info { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s !important; }
       .tools-open #ui #t-info { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s !important; }
-      #ui .corner svg { width: 20px; height: 20px; fill: currentColor; display: block; }   /* Material Symbols, Sharp, filled */
+      /* corner buttons are set as type, like every other label: +, X and I */
+      #ui .corner { font-size: 15px; line-height: 1; letter-spacing: .1em; padding: 0 0 0 .1em; text-transform: uppercase; }   /* the left padding balances the tracking so a single glyph sits dead centre */
+      .is-mobile #ui .corner { font-size: 13px; letter-spacing: .06em; padding-left: .06em; }
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
       #ui #dock {
@@ -405,8 +407,8 @@
       <div class="blk"><button id="t-share" type="button">Share</button></div>
     </div>
     <div id="palette" role="listbox" aria-label="Palette"></div>
-    <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><svg class="p" viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg><svg class="x" viewBox="0 -960 960 960" aria-hidden="true"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></button>
-    <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
+    <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><span class="p">+</span><span class="x">X</span></button>
+    <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info">I</button>
   </div>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><p class="lead">Design and Code by Danilo Amorim.</p></div></section>
   <script>
