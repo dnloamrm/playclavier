@@ -340,11 +340,11 @@
         font-family: "Arizona Sans", sans-serif; font-weight: 400;
         opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
         height: 100vh; height: 100dvh;
-        overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-        scrollbar-width: none; outline: none;
+        overflow: hidden; outline: none;   /* the text scrolls inside .info-in, which stops above the buttons: that band stays clear */
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: 0; width: 100%; text-align: left; }   /* top-left, like the home text */
+      #info-view .info-in { margin: 0; width: 100%; text-align: left; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
+      #info-view .info-in::-webkit-scrollbar { display: none; }
       #info-view p {
         margin: 0 0 28px;
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
