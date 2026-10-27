@@ -220,9 +220,9 @@
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
       /* phones: the layer follows the VISUAL viewport (set live from JS): same height, same offset, GPU-translated */
       .is-mobile #ui { inset: auto; left: 0; top: 0; width: 100%; height: var(--ui-h, 100dvh); transform: translate3d(0, var(--ui-top, 0px), 0); }   /* passive: only the buttons take clicks */
-      /* buttons are filled with the live page colour, so text scrolling underneath never shows through the outline */
+      /* buttons have no fill: the writing field ends above them (a clear band), so nothing scrolls underneath */
       #ui button {
-        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-fg, #F9FAFA); background: var(--c-bg, #0B0D0E);
+        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-fg, #F9FAFA); background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
       }
