@@ -357,10 +357,10 @@
         font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
       }
       #info-view p:last-child { margin-bottom: 0; }
-      /* credits: pinned to the bottom, near the dock. Desktop: (c) on 2 columns, the typeset / design lines on 4, both aligned at the top. Phones stack them. */
+      /* credits: pinned to the bottom, near the dock. Desktop: (c) on 2 columns, the typeset / design lines on 4, (c) aligned to their bottom line. Phones stack them. */
       #info-view .credits { margin-top: auto; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 48px; row-gap: 28px; align-items: start; }
       #info-view .credits p { margin: 0; }
-      #info-view .credits p:first-child { grid-column: 1 / span 2; }
+      #info-view .credits p:first-child { grid-column: 1 / span 2; align-self: end; }   /* (c) sits on the bottom line, level with the last credits line */
       #info-view .credits p:last-child { grid-column: 3 / span 4; }
       .is-mobile #info-view .credits { display: block; }
       .is-mobile #info-view .credits p:first-child { margin-bottom: 28px; }
