@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head>
-    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Jam your solo"><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#1C1717"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Jam your solo"><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preload" href="/fonts/arizona/ABCArizonaTextTrial-Regular.otf" as="font" type="font/otf" crossorigin><style>@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
+    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Jam your solo"><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#0B0D0E"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Jam your solo"><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preload" href="/fonts/arizona/ABCArizonaTextTrial-Regular.otf" as="font" type="font/otf" crossorigin><style>@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
 @font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-RegularItalic.otf) format("opentype");font-weight:400;font-style:italic;font-display:block}
 @font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Bold.otf) format("opentype");font-weight:700;font-style:normal;font-display:block}
 @font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-BoldItalic.otf) format("opentype");font-weight:700;font-style:italic;font-display:block}
@@ -103,12 +103,12 @@
         height: 100dvh;
         width: 100%;
         overflow: hidden;
-        background-color: #1C1717;
-        color: #DFD8D8;
+        background-color: #0B0D0E;
+        color: #F9FAFA;
       }
       #__nuxt {
         height: 100%;
-        background-color: #1C1717;
+        background-color: #0B0D0E;
       }
     </style>
     <style>
@@ -118,18 +118,18 @@
       html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; }
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }   /* passive: only the buttons take clicks */
       #ui button {
-        pointer-events: auto; font-family: "Arizona Sans", sans-serif; color: #EAE6E6; background: transparent;
+        pointer-events: auto; font-family: "Arizona Sans", sans-serif; color: #F9FAFA; background: transparent;
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation;
       }
       #ui .corner {
         position: fixed; bottom: calc(var(--dock-b) + var(--sab, 0px) + var(--keyboard-offset, 0px));
-        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid rgba(234,230,230,.55); border-radius: 6px;
+        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid #505962; border-radius: 6px;
         display: flex; align-items: center; justify-content: center;
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
       #ui #t-info { right: max(var(--edge), env(safe-area-inset-right, 0px)); }
-      #ui .corner svg { width: 28px; height: 28px; fill: #EAE6E6; display: block; }   /* Material Symbols, Sharp, filled */
+      #ui .corner svg { width: 28px; height: 28px; fill: #F9FAFA; display: block; }   /* Material Symbols, Sharp, filled */
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
       #ui #dock {
@@ -138,17 +138,16 @@
         display: flex; gap: 12px; opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
       }
       .tools-open #ui #dock { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-      #ui .blk { height: var(--btn); display: flex; border: 1px solid rgba(234,230,230,.55); border-radius: 6px; }
+      #ui .blk { height: var(--btn); display: flex; border: 1px solid #505962; border-radius: 6px; }
       #ui .blk button {
         height: 100%; padding: 0 24px; border: 0; border-radius: 0; line-height: 1;
         font-size: 15px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
       }
-      #ui .blk button + button { border-left: 1px solid rgba(234,230,230,.55); }
+      #ui .blk button + button { border-left: 1px solid #505962; }
       #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
       #ui .blk button:only-child { border-radius: 5px; }
       #ui .blk button:hover { color: #fff; }
-      .auto-on #ui #t-auto { text-decoration: underline; text-underline-offset: 6px; }
-      #ui button:focus-visible { outline: 2px solid #EAE6E6; outline-offset: 3px; }
+      #ui button:focus-visible { outline: 2px solid #F9FAFA; outline-offset: 3px; }
       .is-mobile #ui #dock { bottom: calc(var(--dock-b) + var(--btn) + var(--gap) + var(--sab, 0px) + var(--keyboard-offset, 0px)); }
       .is-mobile #ui .blk button { padding: 0 14px; font-size: 13px; letter-spacing: .06em; }
       /* Text box inset: reset the legacy paddings so the grid below rules.
@@ -172,10 +171,10 @@
         box-sizing: border-box !important;
       }
       textarea {
-        caret-color: #DFD8D8 !important;
+        caret-color: #F9FAFA !important;
       }
       textarea::placeholder {
-        color: #4C3E3E !important;
+        color: #505962 !important;
         opacity: 1 !important;
       }
       /* Writing area: 40px on every side; the left side also clears the FAB column (40 + 60 + 40) */
@@ -207,7 +206,7 @@
       /* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive) */
       #info-view {
         position: fixed; inset: 0; z-index: 90;
-        background-color: #1C1717; color: #DFD8D8;
+        background-color: #0B0D0E; color: #F9FAFA;
         padding: 40px 40px 40px 140px; box-sizing: border-box; /* same grid as the Home: text starts at the top-left */
         display: flex; flex-direction: column;
         font-family: "Arizona Text", serif;
@@ -221,7 +220,7 @@
       #info-view .info-in { margin: 0; width: 50vw; max-width: 100%; text-align: left; }
       #info-view p {
         margin: 0 0 1.25em; max-width: 22em;
-        font-size: 36px; line-height: 1.2; letter-spacing: 1px; color: #DFD8D8;
+        font-size: 36px; line-height: 1.2; letter-spacing: 1px; color: #F9FAFA;
         opacity: 0; transform: translateY(10px);
         transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
       }
@@ -359,7 +358,7 @@
         if (PAUSE_CHARS.indexOf(ch) > -1) d += PAUSE_MIN + Math.random() * (PAUSE_MAX - PAUSE_MIN);
         return Math.max(40, d);
       }
-      var rootEl = document.documentElement;   /* html.auto-on: AUTO-JAM is underlined while Auto-Type is running */
+      var rootEl = document.documentElement;   /* html.auto-on is set while Auto-Type is running */
       function stop() { runId++; if (timer) { clearTimeout(timer); timer = null; } running = false; rootEl.classList.remove('auto-on'); }
       function step(id) {
         timer = null;
