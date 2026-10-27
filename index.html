@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
-  <head>
+  <head><script>try{if(localStorage.getItem('clavier-theme')==='light')document.documentElement.classList.add('light')}catch(e){}</script>
     <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Jam your solo"><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#0B0D0E"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Jam your solo"><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preload" href="/fonts/arizona/ABCArizonaTextTrial-Regular.otf" as="font" type="font/otf" crossorigin><style>@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
 @font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-RegularItalic.otf) format("opentype");font-weight:400;font-style:italic;font-display:block}
 @font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Bold.otf) format("opentype");font-weight:700;font-style:normal;font-display:block}
@@ -129,6 +129,8 @@
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
       #ui #t-info { right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+      #ui #t-theme { right: calc(max(var(--edge), env(safe-area-inset-right, 0px)) + var(--btn) + var(--gap)); }
+      #ui #t-theme .to-dark, html.light #ui #t-theme .to-light { display: none; } html.light #ui #t-theme .to-dark { display: block; }
       #ui .corner svg { width: 28px; height: 28px; fill: #F9FAFA; display: block; }   /* Material Symbols, Sharp, filled */
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
@@ -249,6 +251,17 @@
         padding: max(clamp(32px, 9vw, 64px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + var(--sab, 0px) + 32px) max(var(--edge), env(safe-area-inset-left, 0px));
       }
       .is-mobile #info-view p { font-size: 40px; }
+      /* Light mode: the same palette inverted (background #F9FAFA, text and icons #0B0D0E, stroke unchanged) */
+      html.light { --bgColor: #F9FAFA; --textColor: #0B0D0E; }
+      html body, html #__nuxt { transition: none !important; }   /* the theme switch is instant: no fade on the background */
+      html.light, html.light body, html.light #__nuxt, html.light #info-view { background-color: #F9FAFA; color: #0B0D0E; }
+      html.light textarea { caret-color: #0B0D0E !important; color: #0B0D0E !important; }
+      html.light textarea::placeholder { color: #DFDBD8 !important; }
+      html.light #info-view p { color: #0B0D0E; }
+      html.light #ui button { color: #0B0D0E; }
+      html.light #ui .corner svg { fill: #0B0D0E; }
+      html.light #ui .blk button:hover { color: #000; }
+      html.light #ui button:focus-visible { outline-color: #0B0D0E; }
     </style>
   </head>
   <body>
@@ -259,6 +272,7 @@
       <div class="blk"><button id="t-new" type="button">New</button></div>
     </div>
     <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><svg class="p" viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg><svg class="x" viewBox="0 -960 960 960" aria-hidden="true"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></button>
+    <button id="t-theme" class="corner" type="button" aria-pressed="false" aria-label="Switch to light mode"><svg class="to-light" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"/></svg><svg class="to-dark" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"/></svg></button>
     <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><svg class="" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-680q-33 0-56.5-23.5T400-760q0-33 23.5-56.5T480-840q33 0 56.5 23.5T560-760q0 33-23.5 56.5T480-680Zm-60 560v-480h120v480H420Z"/></svg></button>
   </div>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p>Clavier is an interactive experience where you improvise using your computer keyboard.</p><p>Designed and coded by Danilo Amorim in pair programming with Claude.</p></div></section>
@@ -489,6 +503,16 @@
         var on = root.classList.contains('info-open');
         infoBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); infoBtn.setAttribute('aria-label', on ? 'Hide info' : 'Show info');
       }).observe(root, { attributes: true, attributeFilter: ['class'] });
+      var themeBtn = document.getElementById('t-theme');
+      function setTheme(light) {
+        root.classList.toggle('light', light);
+        themeBtn.setAttribute('aria-pressed', light ? 'true' : 'false');
+        themeBtn.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
+        var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', light ? '#F9FAFA' : '#0B0D0E');
+        try { localStorage.setItem('clavier-theme', light ? 'light' : 'dark'); } catch (e) {}
+      }
+      setTheme(root.classList.contains('light'));
+      themeBtn.addEventListener('click', function () { setTheme(!root.classList.contains('light')); });
       document.getElementById('t-play').addEventListener('click', function () { if (window.$nuxt) window.$nuxt.$emit('clavier-replay'); });
       document.getElementById('t-auto').addEventListener('click', function () {
         if (root.classList.contains('auto-on')) {   /* pressed again: stop and go back to the default (empty) state */
