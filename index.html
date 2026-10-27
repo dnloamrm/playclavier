@@ -233,6 +233,9 @@
       }
       #ui #t-plus { left: max(var(--edge), env(safe-area-inset-left, 0px)); }
       #ui #t-info { right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+      /* Info stays in the right corner but belongs to the expanded state: it shows with the tools (and while Info itself is open, so it can be closed) */
+      #ui #t-info { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s !important; }
+      .tools-open #ui #t-info, .info-open #ui #t-info { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s !important; }
       #ui .corner svg { width: 20px; height: 20px; fill: currentColor; display: block; }   /* Material Symbols, Sharp, filled */
       #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
       .tools-open #ui #t-plus .x { display: block; }
