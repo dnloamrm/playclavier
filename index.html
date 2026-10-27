@@ -20,11 +20,6 @@
     if (mx !== mn) { var d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); hh = mx === c[0] ? (c[1] - c[2]) / d + (c[1] < c[2] ? 6 : 0) : mx === c[1] ? (c[2] - c[0]) / d + 2 : (c[0] - c[1]) / d + 4; hh *= 60; }
     return [hh, s, l];
   }
-  function fromHsl(h, s, l) {
-    h = ((h % 360) + 360) % 360; var a = s * Math.min(l, 1 - l);
-    function f(n) { var k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }
-    return hex([f(0) * 255, f(8) * 255, f(4) * 255]);
-  }
   /* first colour of the list that reads well on `against`, else the one that reads best */
   function best(against, list) {
     var pick = list[0], top = 0;
@@ -35,54 +30,39 @@
   function autoBg(fg) { return best(fg, ['#0B0D0E', '#F9FAFA', '#FFFFFF', '#000000']); }
   /* placeholder: 100% black or white (whichever contrasts more with the background) laid over it as a 20% overlay */
   function phColor(bg) { return mix(ratio('#FFFFFF', bg) >= ratio('#000000', bg) ? '#FFFFFF' : '#000000', bg, .2); }
-  /* a colour of hue h / saturation s that reads on every background in `bgs` (>= min), lightness as close to `want` as possible;
-     if the hue cannot get there, it is desaturated step by step */
-  function solve(h, s, bgs, min, want) {
-    for (var sat = s; sat >= -.001; sat -= .12) {
-      var pick = null, d = 9;
-      for (var l = .03; l <= .97; l += .01) {
-        var c = fromHsl(h, Math.max(0, sat), l), ok = true;
-        for (var i = 0; i < bgs.length; i++) if (ratio(c, bgs[i]) < min) { ok = false; break; }
-        if (ok && Math.abs(l - want) < d) { d = Math.abs(l - want); pick = c; }
-      }
-      if (pick) return pick;
-    }
-    return null;
-  }
-  function pickOne(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function jit(x) { return x + (Math.random() * 2 - 1) * 12; }
-  /* hue offsets (degrees from the background hue) for [text, label, icon, stroke], per harmony */
-  var SCHEMES = [
-    { n: 'complementary',      h: [180, 150, 205, 25] },
-    { n: 'split-complementary', h: [150, 210, 180, 30] },
-    { n: 'triadic',            h: [120, 240, 165, 20] },
-    { n: 'tetradic',           h: [90, 180, 270, 45] },
-    { n: 'analogous + accent', h: [30, 330, 180, 15] }
+  /* the 100 compositions (background, foreground): every ordered pair of the palette's 22 colours that contrasts, ranked by ratio.
+     Each unordered pair appears both ways (light on dark and dark on light). Contrast ratio: 19.5 down to 4.43; 96 of them are >= 4.5. */
+  var PAIRS = [
+    ['#FFFFFF','#0B0D0E'], ['#0B0D0E','#FFFFFF'], ['#0B0D0E','#EEE6E1'], ['#EEE6E1','#0B0D0E'], ['#0B0D0E','#F8E869'],
+    ['#F8E869','#0B0D0E'], ['#0B0D0E','#D7E2DE'], ['#D7E2DE','#0B0D0E'], ['#FFFFFF','#4B2A28'], ['#4B2A28','#FFFFFF'],
+    ['#FFFFFF','#223E27'], ['#223E27','#FFFFFF'], ['#0B0D0E','#B4CCB5'], ['#B4CCB5','#0B0D0E'], ['#0B0D0E','#CFBFAC'],
+    ['#CFBFAC','#0B0D0E'], ['#EEE6E1','#4B2A28'], ['#4B2A28','#EEE6E1'], ['#0B0D0E','#80CE56'], ['#80CE56','#0B0D0E'],
+    ['#4B2A28','#F8E869'], ['#F8E869','#4B2A28'], ['#0B0D0E','#B4B3E1'], ['#B4B3E1','#0B0D0E'], ['#0B0D0E','#7EBFD9'],
+    ['#7EBFD9','#0B0D0E'], ['#EEE6E1','#223E27'], ['#223E27','#EEE6E1'], ['#4B2A28','#D7E2DE'], ['#D7E2DE','#4B2A28'],
+    ['#F8E869','#223E27'], ['#223E27','#F8E869'], ['#FFFFFF','#8A1D34'], ['#8A1D34','#FFFFFF'], ['#D7E2DE','#223E27'],
+    ['#223E27','#D7E2DE'], ['#0B0D0E','#CF9ED4'], ['#CF9ED4','#0B0D0E'], ['#0B0D0E','#E3954A'], ['#E3954A','#0B0D0E'],
+    ['#EEE6E1','#8A1D34'], ['#8A1D34','#EEE6E1'], ['#4B2A28','#B4CCB5'], ['#B4CCB5','#4B2A28'], ['#F8E869','#8A1D34'],
+    ['#8A1D34','#F8E869'], ['#CFBFAC','#4B2A28'], ['#4B2A28','#CFBFAC'], ['#8A1D34','#D7E2DE'], ['#D7E2DE','#8A1D34'],
+    ['#223E27','#B4CCB5'], ['#B4CCB5','#223E27'], ['#0B0D0E','#A58BDF'], ['#A58BDF','#0B0D0E'], ['#0B0D0E','#AC966A'],
+    ['#AC966A','#0B0D0E'], ['#4B2A28','#80CE56'], ['#80CE56','#4B2A28'], ['#CFBFAC','#223E27'], ['#223E27','#CFBFAC'],
+    ['#4B2A28','#B4B3E1'], ['#B4B3E1','#4B2A28'], ['#0B0D0E','#6194D6'], ['#6194D6','#0B0D0E'], ['#4B2A28','#7EBFD9'],
+    ['#7EBFD9','#4B2A28'], ['#223E27','#80CE56'], ['#80CE56','#223E27'], ['#B4B3E1','#223E27'], ['#223E27','#B4B3E1'],
+    ['#7EBFD9','#223E27'], ['#223E27','#7EBFD9'], ['#4B2A28','#CF9ED4'], ['#CF9ED4','#4B2A28'], ['#0B0D0E','#D74CD9'],
+    ['#D74CD9','#0B0D0E'], ['#FFFFFF','#626F42'], ['#626F42','#FFFFFF'], ['#CF9ED4','#223E27'], ['#223E27','#CF9ED4'],
+    ['#8A1D34','#B4CCB5'], ['#B4CCB5','#8A1D34'], ['#4B2A28','#E3954A'], ['#E3954A','#4B2A28'], ['#CFBFAC','#8A1D34'],
+    ['#8A1D34','#CFBFAC'], ['#FFFFFF','#866A4A'], ['#866A4A','#FFFFFF'], ['#0B0D0E','#D95736'], ['#D95736','#0B0D0E'],
+    ['#E3954A','#223E27'], ['#223E27','#E3954A'], ['#8A1D34','#80CE56'], ['#80CE56','#8A1D34'], ['#8A1D34','#B4B3E1'],
+    ['#B4B3E1','#8A1D34'], ['#8A1D34','#7EBFD9'], ['#7EBFD9','#8A1D34'], ['#4B2A28','#A58BDF'], ['#A58BDF','#4B2A28'],
   ];
-  function hueGap(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
-  /* a creative composition. The interface is made of:
-       bg   page background (from the palette)
-       fg   ONE colour for the typography, the borders, the icons and the labels (a different harmonic hue, >= 4.5:1 on bg
-            and on the Info glass tint; dark on light backgrounds, light on dark ones)
-       ph   the placeholder, derived from bg: 100% black or white with a 20% overlay                                        */
-  var HUES = [180, 150, 210, 120, 240, 90, 270, 30, 330];
+  /* The interface is made of:
+       bg   page background
+       fg   ONE colour for the typography, the borders, the icons and the labels
+       ph   the placeholder, derived from bg: 100% black or white with a 20% overlay
+     Randomize picks one of the 100 pairs above (never the same pair twice in a row, never the same background twice in a row). */
   function compose(prev) {
-    for (var tries = 0; tries < 80; tries++) {
-      var base = PAL.filter(Boolean), bg = pickOne(base);
-      var hsl = toHsl(bg), h0 = hsl[1] < .1 ? Math.random() * 360 : hsl[0];
-      var dark = lum(bg) < .18, want = dark ? .74 : .26, h = h0 + jit(pickOne(HUES));
-      var fg = null;
-      /* the Info glass tints the page with the text colour, so fg must also read on that tint */
-      [4.5, 4.9, 5.4, 6, 7, 8.5].some(function (min) {
-        var c = solve(h, .5 + Math.random() * .4, [bg], min, want + (Math.random() * .12 - .06));
-        if (c && ratio(c, mix(c, bg, .22)) >= MIN.text) { fg = c; return true; }
-        return false;
-      });
-      if (!fg) continue;
-      if (prev && prev.bg === bg && prev.fg === fg) continue;
-      return { bg: bg, fg: fg };
-    }
-    return { bg: '#223E27', fg: '#F8E869' };
+    var pool = PAIRS.filter(function (p) { return !prev || (p[0] !== prev.bg && !(p[0] === prev.bg && p[1] === prev.fg)); });
+    var p = pool[Math.floor(Math.random() * pool.length)];
+    return { bg: p[0], fg: p[1] };
   }
   function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
   /* the full map for a saved / chosen state: anything missing or too weak is derived or repaired */
@@ -108,7 +88,7 @@
     if (!c && localStorage.getItem('clavier-theme') === 'light') c = { bg: '#F9FAFA', fg: '#171A1C' };   /* the old light mode */
   } catch (e) {}
   window.__colors = c || {};
-  window.__colorUtil = { apply: apply, resolve: resolve, compose: compose, ratio: ratio, lum: lum, toHsl: toHsl, phColor: phColor, auto: auto, autoBg: autoBg, D: D, PAL: PAL, MIN: MIN, LEGIBLE: MIN.text };
+  window.__colorUtil = { apply: apply, resolve: resolve, compose: compose, PAIRS: PAIRS, ratio: ratio, lum: lum, toHsl: toHsl, phColor: phColor, auto: auto, autoBg: autoBg, D: D, PAL: PAL, MIN: MIN, LEGIBLE: MIN.text };
   apply(window.__colors);
 })();
 </script>
