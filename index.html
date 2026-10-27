@@ -399,7 +399,7 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text */
+        padding: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + 32px + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
       }
     </style>
   </head>
