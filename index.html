@@ -663,8 +663,8 @@
         setTools(on);
       });
       infoBtn.addEventListener('click', function () {
-        if (root.classList.contains('info-open')) { if (window.__closeInfo) window.__closeInfo(); }
-        else if (window.__openInfo) window.__openInfo();
+        /* Info only opens from here: pressing it again does not send you back to the writing screen (X goes home, NEW starts a new text) */
+        if (!root.classList.contains('info-open') && window.__openInfo) window.__openInfo();
       });
       new MutationObserver(function () {
         var on = root.classList.contains('info-open');
