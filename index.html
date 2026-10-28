@@ -79,11 +79,11 @@
     return { bg: bg, fg: fg, ph: phColor(bg) };
   }
   function apply(c) {
-    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-ph', '--bgColor', '--textColor'];
+    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-ph', '--bgColor', '--textColor', '--c-glass'];
     c = c || {};
     if (!c.bg && !c.fg) { names.forEach(function (n) { s.removeProperty(n); }); window.__colorMap = null; meta(D.bg); return; }
     var m = resolve(c);
-    var v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg };
+    var rgbv = rgb(m.bg), v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg, '--c-glass': 'rgba(' + rgbv.join(',') + ',.55)' };   /* --c-glass: the Info glass tint for browsers without color-mix() */
     for (var k in v) s.setProperty(k, v[k]);
     window.__colorMap = m;   /* the live map: bg, fg, ph */
     meta(m.bg);
@@ -318,6 +318,9 @@
         margin: 0 !important;
         width: 100% !important;
       }
+      /* browsers without :has(): the same two resets through classes that a script puts on the home section / container (see "fallback for :has()") */
+      .is-home-section { padding: 0 !important; }
+      .is-home-container { margin: 0 !important; width: 100% !important; }
       .main-wrapper {
         padding: 0 !important;
       }
@@ -359,7 +362,7 @@
          Glass background (translucent + blur), text block centred in the interface over 4 grid columns, left aligned. */
       #info-view {
         position: fixed; inset: 0; z-index: 90;
-        background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);
+        background-color: var(--c-glass, rgba(11, 13, 14, .55)); background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);   /* the 2nd declaration wins where color-mix() exists */
         -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
         padding: calc(var(--dock-b) + var(--btn) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
         display: flex; flex-direction: column;
@@ -441,6 +444,20 @@
       ["/_nuxt/a97ff0af771ea114ad33.js", "/_nuxt/475e5faa9cb04d524d9d.js", "/_nuxt/e52102afb3cb9c331891.js", "/_nuxt/238870880c42d0488215.js"].forEach(function (src) {
         var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
       });
+    })();
+  </script>
+  <script>
+    /* fallback for :has(): browsers that cannot match the home section by its content get the same two resets through classes */
+    (function () {
+      if (window.CSS && CSS.supports && CSS.supports('selector(:has(*))')) return;
+      function mark() {
+        var w = document.querySelector('.main-wrapper'); if (!w) return false;
+        var c = w.parentElement, sec = c && c.parentElement;
+        if (c && c.classList.contains('container')) { c.classList.add('is-home-container'); if (sec && sec.classList.contains('section')) sec.classList.add('is-home-section'); }
+        return true;
+      }
+      var mo = new MutationObserver(function () { if (mark()) mo.disconnect(); });
+      mo.observe(document.documentElement, { childList: true, subtree: true }); mark();
     })();
   </script>
   <script>
