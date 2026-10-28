@@ -8,7 +8,7 @@
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
   <head><script>
 /* Colours. The interface = ONE foreground colour (typography, borders, icons, labels), the background, and the placeholder
-   (100% black or white with a 20% overlay). The user can paint bg / fg by hand, or press Randomize for a harmonic composition;
+   (100% black or white with a 35% overlay). The user can paint bg / fg by hand, or press Randomize for a harmonic composition;
    colours are a free choice (Shuffle always gives a legible pair). Saved in localStorage and applied here, before the first paint.
    No saved colours = the default dark theme. */
 (function () {
@@ -34,8 +34,8 @@
   }
   function auto(bg) { return best(bg, ['#F9FAFA', '#171A1C', '#FFFFFF', '#000000']); }
   function autoBg(fg) { return best(fg, ['#0B0D0E', '#F9FAFA', '#FFFFFF', '#000000']); }
-  /* placeholder: 100% black or white (whichever contrasts more with the background) laid over it as a 20% overlay */
-  function phColor(bg) { return mix(ratio('#FFFFFF', bg) >= ratio('#000000', bg) ? '#FFFFFF' : '#000000', bg, .2); }
+  /* placeholder: 100% black or white (whichever contrasts more with the background) laid over it as a 35% overlay (3.17:1 on the default theme) */
+  function phColor(bg) { return mix(ratio('#FFFFFF', bg) >= ratio('#000000', bg) ? '#FFFFFF' : '#000000', bg, .35); }
   /* the 100 compositions (background, foreground): every ordered pair of the palette's 22 colours that contrasts, ranked by ratio.
      Each unordered pair appears both ways (light on dark and dark on light). Contrast ratio: 19.5 down to 4.43; 96 of them are >= 4.5. */
   var PAIRS = [
@@ -63,7 +63,7 @@
   /* The interface is made of:
        bg   page background
        fg   ONE colour for the typography, the borders, the icons and the labels
-       ph   the placeholder, derived from bg: 100% black or white with a 20% overlay
+       ph   the placeholder, derived from bg: 100% black or white with a 35% overlay
      Randomize picks one of the 100 pairs above (never the same pair twice in a row, never the same background twice in a row). */
   function compose(prev) {
     var pool = PAIRS.filter(function (p) { return !prev || (p[0] !== prev.bg && !(p[0] === prev.bg && p[1] === prev.fg)); });
@@ -299,7 +299,7 @@
         caret-color: var(--c-fg, #F9FAFA) !important;
       }
       textarea::placeholder {
-        color: var(--c-ph, #3C3D3E) !important;   /* default theme: white at 20% over #0B0D0E */
+        color: var(--c-ph, #606262) !important;   /* default theme: white at 35% over #0B0D0E */
         opacity: 1 !important;
       }
       /* Writing area: 40px on every side; the left side also clears the FAB column (40 + 60 + 40) */
