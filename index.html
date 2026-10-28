@@ -189,15 +189,12 @@
         window.__closeInfo = function () { close(false); };
         /* One address only: Info never touches the URL (no #info, no sub-links). An old /#info link simply lands on the home screen. */
         if (location.hash === '#info') history.replaceState(null, '', location.pathname + location.search);
-        document.addEventListener('DOMContentLoaded', function () {
-          var b = document.getElementById('info-close'); if (b) b.addEventListener('click', function () { close(false); });
-        });
         /* While Info is open the keyboard must not play or type into the app behind it. */
         window.addEventListener('keydown', function (e) {
           if (!isOpen()) return;
           if (e.key === 'Escape') { close(false, true); e.preventDefault(); e.stopImmediatePropagation(); return; }   /* Esc closes Info only; the tools stay open and the focus goes back to "i" */
           if (e.metaKey || e.ctrlKey || e.altKey) return;
-          if (e.target && e.target.id === 'info-close' && (e.key === 'Enter' || e.key === ' ' || e.key === 'Tab')) return;
+          if (e.target && e.target.closest && e.target.closest('#ui')) return;   /* the controls stay operable from the keyboard while Info is open */
           e.stopImmediatePropagation();
           if (e.key !== 'Tab' && !/^(Arrow(Up|Down)|Page(Up|Down)|Home|End| )$/.test(e.key)) e.preventDefault();
         }, true);
@@ -449,11 +446,12 @@
       mo.observe(document.documentElement, { childList: true, subtree: true });
       grab();
       window.addEventListener('keydown', function (e) {
-        if (e.metaKey || e.ctrlKey || e.altKey) return;
-        /* keyboard navigation: Tab moves between the buttons, and Enter / Space press the focused one; any other key still goes back to the field */
-        var a = document.activeElement, inUi = a && a.closest && a.closest('#ui');
-        if (e.key === 'Tab' || (inUi && (e.key === 'Enter' || e.key === ' '))) return;
-        if (ta && document.activeElement !== ta) ta.focus({ preventScroll: true });
+        if (e.metaKey || e.ctrlKey || e.altKey || !ta) return;
+        /* Only keys that produce text go back to the field: a character, Backspace, and Enter when no button has the focus.
+           While a button of #ui has the focus nothing is redirected (Tab, Enter, Space, arrows... belong to the button). */
+        var a = document.activeElement;
+        if (a === ta || (a && a.closest && a.closest('#ui'))) return;
+        if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') ta.focus({ preventScroll: true });
       }, true);
     })();
   </script>
