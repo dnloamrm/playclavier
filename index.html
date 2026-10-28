@@ -89,12 +89,20 @@
     meta(m.bg);
   }
   var c = null;
+  /* only palette colours are accepted: anything else (a hand-edited value, a colour from an old version) falls back to the default one */
+  function validate(c) {
+    if (!c || typeof c !== 'object') return null;
+    var ok = function (v) { return typeof v === 'string' && PAL.indexOf(v.toUpperCase()) > 0; };   /* index 0 is white; null (the default swatch) is skipped by typeof */
+    var out = { bg: ok(c.bg) ? c.bg.toUpperCase() : null, fg: ok(c.fg) ? c.fg.toUpperCase() : null };
+    return out.bg || out.fg ? out : null;
+  }
   try {
     c = JSON.parse(localStorage.getItem('clavier-colors') || 'null');
-    if (!c && localStorage.getItem('clavier-theme') === 'light') c = { bg: '#F9FAFA', fg: '#171A1C' };   /* the old light mode */
+    if (!c && localStorage.getItem('clavier-theme') === 'light') c = { bg: '#EEE6E1', fg: '#0B0D0E' };   /* the old light mode, as its nearest palette pair */
   } catch (e) {}
+  c = validate(c);
   window.__colors = c || {};
-  window.__colorUtil = { apply: apply, resolve: resolve, compose: compose, PAIRS: PAIRS, ratio: ratio, lum: lum, toHsl: toHsl, phColor: phColor, auto: auto, autoBg: autoBg, D: D, PAL: PAL, MIN: MIN, LEGIBLE: MIN.text };
+  window.__colorUtil = { apply: apply, resolve: resolve, compose: compose, validate: validate, PAIRS: PAIRS, ratio: ratio, lum: lum, toHsl: toHsl, phColor: phColor, auto: auto, autoBg: autoBg, D: D, PAL: PAL, MIN: MIN, LEGIBLE: MIN.text };
   apply(window.__colors);
 })();
 </script>
