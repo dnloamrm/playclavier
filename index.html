@@ -333,12 +333,12 @@
         }
       }
       /* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive).
-         Glass background (translucent + blur), text centred in the 4 central columns, Arizona Sans 20/28, left aligned. */
+         Glass background (translucent + blur), text block centred in the interface over 4 grid columns, left aligned. */
       #info-view {
         position: fixed; inset: 0; z-index: 90;
         background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);
         -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
-        padding: 40px 40px calc(var(--dock-b) + var(--btn) + 32px); box-sizing: border-box;   /* starts at the same top-left as the home text, stays clear of the buttons */
+        padding: calc(var(--dock-b) + var(--btn) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
         display: flex; flex-direction: column;
         font-family: "Arizona Sans", sans-serif; font-weight: 400;
         opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
@@ -384,7 +384,7 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
+        padding: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
       }
     </style>
   </head>
