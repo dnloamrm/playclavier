@@ -37,9 +37,9 @@ test('keyboard: Enter and Space press the focused button (the whole dock works w
     await tabTo(page, 't-fill'); await page.keyboard.press('Space'); await sleep(250);
     assert((await classes(page)).palette, 'Space on THEME did not open the palette');
     // SHUFFLE (Enter) changes the colours
-    const before = await page.evaluate(() => JSON.stringify(window.__colorMap));
+    const before = await page.evaluate(() => JSON.stringify(window.Clavier.theme.map));
     await tabTo(page, 't-rand'); await page.keyboard.press('Enter'); await sleep(250);
-    assert(await page.evaluate(() => JSON.stringify(window.__colorMap)) !== before, 'Enter on SHUFFLE did not change the colours');
+    assert(await page.evaluate(() => JSON.stringify(window.Clavier.theme.map)) !== before, 'Enter on SHUFFLE did not change the colours');
   } finally { await page.close(); }
 }, { tags: ['a11y'] });
 
@@ -138,4 +138,4 @@ test('keyboard: AUTO-JAM can be stopped from the keyboard (Tab to it, Enter) wit
     await tabTo(page, 't-auto'); await page.keyboard.press('Enter'); await sleep(600);
     assert(!(await classes(page)).auto, 'AUTO-JAM is running again: the Tab that moved the focus counted as typing and stopped it, then Enter restarted it');
   } finally { await page.close(); }
-}, { tags: ['a11y'], knownFailing: 'any trusted key, Tab included, stops Auto-jam; so a keyboard user cannot stop it with its own button (auto-type handler)' });
+}, { tags: ['a11y'] });

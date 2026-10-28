@@ -5,8 +5,8 @@ const { sleep, openTools, classes, text } = require('../lib/browser');
 test('auto-jam: every poem is a complete text ending in ONE full stop and lasts at least 30 s (validated here, not filtered at runtime)', async ({ open }) => {
   const page = await open({});
   try {
-    const r = await page.evaluate(() => {
-      const concepts = window.__CLAVIER_CONCEPTS, est = window.__clavierEstimate, bad = [];
+    const r = await page.evaluate(async () => {
+      const { CONCEPTS: concepts, estimateMs: est } = await import('/js/poems-v1.js'), bad = [];
       concepts.forEach((c) => c.poems.forEach((p, i) => { if (!/[^.]\.$/.test(p)) bad.push(`${c.id}#${i}: not a complete text with one final full stop`); const ms = est(c, p); if (ms < 30000) bad.push(`${c.id}#${i}: only ${Math.round(ms / 1000)} s`); }));
       return { n: concepts.length, poems: concepts.map((c) => c.poems.length), bad };
     });
@@ -32,7 +32,7 @@ test('auto-jam: a concept without poems does nothing instead of throwing', async
   const page = await open({});
   try {
     await openTools(page);
-    await page.evaluate(() => { window.__CLAVIER_CONCEPTS.forEach((c) => { c.poems.length = 0; }); });
+    await page.evaluate(async () => { const { CONCEPTS } = await import('/js/poems-v1.js'); CONCEPTS.forEach((c) => { c.poems.length = 0; }); });   // the same module instance the page uses
     await page.evaluate(() => document.getElementById('t-auto').click()); await sleep(900);
     assert(!(await classes(page)).auto, 'it started without any poem');
     assert(page.errors.length === 0, 'page errors: ' + page.errors.join(' | '));

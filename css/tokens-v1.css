@@ -1,0 +1,38 @@
+/* Clavier design tokens. The single source of truth for colours, spacing and breakpoints: the CSS reads them, and the JS reads them from here
+   (getComputedStyle), so a value is never written twice. */
+:root {
+  /* default theme (what is on screen when nothing was chosen) */
+  --default-bg: #0B0D0E;
+  --default-fg: #F9FAFA;
+  --default-ph: #606262;                       /* white at 35% over --default-bg (the same rule js/colors-v1.js applies to every background) */
+  --default-glass: rgba(11, 13, 14, .55);      /* --default-bg at 55%: the Info page tint */
+  /* the live theme: js/colors-v1.js writes these on <html> when the user picks colours; removing them restores the defaults above */
+  --c-bg: var(--default-bg);
+  --c-fg: var(--default-fg);
+  --c-ph: var(--default-ph);
+  --c-glass: var(--default-glass);
+  /* breakpoints (unitless: media queries cannot read variables, so the bootstrap script turns them into the classes is-mobile / is-wide) */
+  --bp-narrow: 820;   /* <= this: the phone layout */
+  --bp-wide: 1024;    /* >= this: 22-swatch palette row and the 4-column Info block */
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; --block-gap: 24px; --clear: 32px;
+  --stack-h: calc(var(--dock-b) + var(--btn) + var(--sab, 0px)); --stack-max: var(--stack-h); }   /* --stack-h / --stack-max are MEASURED from #stack (script at the end of the body); these are the first-paint values */
+html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; --block-gap: 12px; --gap: var(--block-gap); --clear: 16px; }   /* phones: tight, every distance between button rows is the same 12px, and the text stops 16px above the buttons */
+
+/* the page itself: paints the theme before any JS runs (no flash of an unstyled page) */
+html, body {
+  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--c-bg);
+  color: var(--c-fg);
+}
+#__nuxt {
+  height: 100%;
+  background-color: var(--c-bg);
+}

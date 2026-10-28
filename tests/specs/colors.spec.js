@@ -11,7 +11,7 @@ const pick = async (page, mode, c) => { await click(page, mode === 'bg' ? 't-fil
 test('colors: the 100 curated SHUFFLE pairs are unique, palette-only and contrast >= 4.43:1', async ({ open }) => {
   const page = await open({});
   try {
-    const P = await page.evaluate(() => window.__colorUtil.PAIRS);
+    const P = await page.evaluate(() => window.Clavier.colors.PAIRS);
     assert(P.length === 100, 'pairs: ' + P.length);
     assert(new Set(P.map((p) => p.join())).size === 100, 'duplicate pairs');
     assert(P.every((p) => PALETTE.includes(p[0]) && PALETTE.includes(p[1])), 'a pair uses a colour outside the palette');
@@ -40,9 +40,9 @@ test('colors: one foreground colour drives text, caret, labels, icons and border
       await click(page, 't-rand'); await sleep(120);
       const m = await page.evaluate(() => {
         const g = (s, p) => getComputedStyle(document.querySelector(s))[p];
-        const fg = window.__colorMap.fg;
+        const fg = window.Clavier.theme.map.fg;
         const parts = { text: g('textarea', 'color'), caret: g('textarea', 'caretColor'), plus: g('#t-plus', 'color'), info: g('#t-info', 'color'), border: g('#t-play', 'borderTopColor'), borderPlus: g('#t-plus', 'borderTopColor'), icon: g('#t-new', 'color') };
-        return { fg, parts, bg: window.__colorMap.bg, body: g('body', 'backgroundColor') };
+        return { fg, parts, bg: window.Clavier.theme.map.bg, body: g('body', 'backgroundColor') };
       });
       Object.entries(m.parts).forEach(([k, v]) => assert(hex(v) === m.fg, `${k} (${hex(v)}) differs from the foreground (${m.fg})`));
       assert(hex(m.body) === m.bg, 'body background differs from the token');
@@ -57,14 +57,14 @@ test('colors: free choice (bg = text allowed), persisted across reloads, an unse
   try {
     await openTools(page);
     await pick(page, 'bg', '#223E27'); await pick(page, 'fg', '#223E27');
-    assert.eq(await page.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#223E27', '#223E27'], 'same colour on both');
+    assert.eq(await page.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#223E27', '#223E27'], 'same colour on both');
     await pick(page, 'bg', '#F8E869');
-    assert(await page.evaluate(() => window.__colorMap.fg) === '#223E27', 'the text colour was changed behind the user\'s back');
+    assert(await page.evaluate(() => window.Clavier.theme.map.fg) === '#223E27', 'the text colour was changed behind the user\'s back');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.$nuxt && window.$nuxt.$store.state.isLoading === false, { timeout: 200000 }); await sleep(900);
-    assert.eq(await page.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#F8E869', '#223E27'], 'not remembered after reload');
+    assert.eq(await page.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#F8E869', '#223E27'], 'not remembered after reload');
     await openTools(page); await pick(page, 'bg', null);
-    assert.eq(await page.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#0B0D0E', '#223E27'], 'reset bg must be the default and leave the text alone');
+    assert.eq(await page.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#0B0D0E', '#223E27'], 'reset bg must be the default and leave the text alone');
   } finally { await page.close(); }
 }, { tags: ['colors'] });
 
@@ -78,12 +78,17 @@ test('colors: a saved value that is not in the palette falls back to the default
 
 test('colors: a saved colour of the palette is kept, an unknown one is dropped, white is valid', async ({ open }) => {
   const a = await open({ colors: { bg: '#8a1d34', fg: '#FFFFFF' } });
-  try { assert.eq(await a.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#8A1D34', '#FFFFFF'], 'palette colours (any case, white included)'); } finally { await a.close(); }
+  try { assert.eq(await a.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#8A1D34', '#FFFFFF'], 'palette colours (any case, white included)'); } finally { await a.close(); }
   const b = await open({ colors: { bg: '#8A1D34', fg: '#123456' } });
-  try { assert.eq(await b.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#8A1D34', '#F9FAFA'], 'only the unknown colour falls back'); } finally { await b.close(); }
+  try { assert.eq(await b.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#8A1D34', '#F9FAFA'], 'only the unknown colour falls back'); } finally { await b.close(); }
 }, { tags: ['colors'] });
 
 test('colors: the Info glass has a fallback tint for browsers without color-mix()', async ({ open }) => {
   const page = await open({ colors: { bg: '#8A1D34', fg: '#FFFFFF' } });
   try { assert(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--c-glass').trim()) === 'rgba(138,29,52,.55)', 'the --c-glass fallback is not set'); } finally { await page.close(); }
+}, { tags: ['colors'] });
+
+test('colors: a SHUFFLE pair that uses the dark default (dark text on a light background) survives a reload', async ({ open }) => {
+  const page = await open({ colors: { bg: '#EEE6E1', fg: '#0B0D0E' } });
+  try { assert.eq(await page.evaluate(() => [window.Clavier.theme.map.bg, window.Clavier.theme.map.fg]), ['#EEE6E1', '#0B0D0E'], 'the dark text colour was dropped as "not in the palette"'); } finally { await page.close(); }
 }, { tags: ['colors'] });

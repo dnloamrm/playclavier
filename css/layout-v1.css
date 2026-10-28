@@ -1,0 +1,71 @@
+/* Layout of the writing area: the home section resets, the textarea (with the band reserved for the controls) and the phone-specific root lock.
+   The compiled app ships its own CSS (a legacy two-column page with paddings, margins and a 36px / 56px font). Nothing here needs:
+   every rule below simply has a higher specificity than the app's (a leading "html" is enough for tag rules; the app's class rules are 0-2-0). */
+/* Text box inset: reset the legacy paddings so the grid below rules.
+   Scoped with :has() so it only touches the home-page section/container
+   and never the ModalWrapper instance (song picker, info, share), which
+   reuses the same .section/.container class names. */
+html .section:has(> .container > .main-wrapper) {
+  padding: 0;
+}
+html .container:has(> .main-wrapper) {
+  margin: 0;
+  width: 100%;
+}
+/* browsers without :has(): the same two resets through classes that a script puts on the home section / container (see "fallback for :has()") */
+html .is-home-section { padding: 0; }
+html .is-home-container { margin: 0; width: 100%; }
+html .main-wrapper {
+  padding: 0;
+}
+html .main-wrapper .main {
+  padding: 0;
+  width: 100%;
+  height: 100dvh;
+  box-sizing: border-box;
+}
+html textarea {
+  caret-color: var(--c-fg);
+}
+html textarea::placeholder {
+  color: var(--c-ph);   /* the placeholder: white or black at 35% over the page colour (see js/colors-v1.js) */
+  opacity: 1;
+}
+/* Writing area: 40px on every side (phones override this below) */
+html textarea {
+  --m: 40px;
+  --ml: 40px;
+  --lim: calc(var(--stack-h) + var(--clear));   /* the text never runs closer than --clear to the controls (whatever is open, palette included): it scrolls instead */
+  margin: var(--m) var(--m) var(--lim) var(--ml);
+  padding: 0;
+  width: calc(100% - var(--ml) - var(--m));
+  height: calc(100dvh - var(--m) - var(--lim));
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* Desktop: the text runs from column 1 to column 12 of a 12-col grid (40px margins, 48px gutters); the same margins from 821px up */
+html:not(.is-mobile) textarea {
+  --gx: 40px;   /* column 1 to column 12: edge to edge of the grid */
+  margin-left: var(--gx);
+  margin-right: var(--gx);
+  width: calc(100vw - 2 * var(--gx));
+}
+/* Mobile / touch layout (class set before first paint by the head script) */
+html.is-mobile textarea {
+  --mx: var(--edge);
+  --mt: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px);
+  --mb: calc(var(--stack-h) + var(--clear));
+  margin: var(--mt) max(var(--mx), env(safe-area-inset-right, 0px)) 0 max(var(--mx), env(safe-area-inset-left, 0px));
+  padding: 0;   /* like desktop: the field ENDS above the buttons (a clear bottom band), the text scrolls inside it */
+  width: calc(100% - max(var(--mx), env(safe-area-inset-left, 0px)) - max(var(--mx), env(safe-area-inset-right, 0px)));
+  height: calc(var(--vvh, 100dvh) - var(--mt) - var(--mb));
+  font-size: 40px; line-height: 1.25;
+}
+/* phones: the root is locked to the screen (no rubber-band scrolling in iOS Safari) */
+html.is-mobile, html.is-mobile body { position: fixed; inset: 0; width: 100%; height: 100dvh; overflow: hidden; }
+html.is-mobile .main-wrapper .main {
+  position: fixed; left: 0; top: var(--vvt, 0px);
+  width: 100%; height: var(--vvh, 100dvh); overflow: hidden;
+}

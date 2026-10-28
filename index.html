@@ -6,419 +6,106 @@
   Debussy "Clair de lune" MIDI (public domain, Mutopia). Typefaces: ABC Arizona by Dinamo (trial files).
 -->
 <html lang="en" data-n-head="%7B%22lang%22:%7B%221%22:%22en%22%7D%7D">
-  <head><script>
-/* Colours. The interface = ONE foreground colour (typography, borders, icons, labels), the background, and the placeholder
-   (100% black or white with a 35% overlay). The user can paint bg / fg by hand, or press Randomize for a harmonic composition;
-   colours are a free choice (Shuffle always gives a legible pair). Saved in localStorage and applied here, before the first paint.
-   No saved colours = the default dark theme. */
-(function () {
-  var D = { bg: '#0B0D0E', fg: '#F9FAFA' };
-  var PAL = ['#FFFFFF', null, '#EEE6E1', '#CFBFAC', '#4B2A28', '#866A4A', '#AC966A', '#F8E869', '#E3954A', '#D95736', '#8A1D34',
-             '#D74CD9', '#CF9ED4', '#A58BDF', '#B4B3E1', '#6194D6', '#7EBFD9', '#D7E2DE', '#626F42', '#223E27', '#80CE56', '#B4CCB5'];
-  var MIN = { text: 4.5, stroke: 3, ph: 3.1 };
-  function rgb(h) { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
-  function hex(a) { return '#' + a.map(function (v) { v = Math.round(Math.max(0, Math.min(255, v))); return (v < 16 ? '0' : '') + v.toString(16); }).join('').toUpperCase(); }
-  function lum(h) { var c = rgb(h).map(function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
-  function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
-  function mix(a, b, t) { var x = rgb(a), y = rgb(b); return hex([0, 1, 2].map(function (i) { return x[i] * t + y[i] * (1 - t); })); }
-  function toHsl(h) {
-    var c = rgb(h).map(function (v) { return v / 255; }), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), l = (mx + mn) / 2, s = 0, hh = 0;
-    if (mx !== mn) { var d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); hh = mx === c[0] ? (c[1] - c[2]) / d + (c[1] < c[2] ? 6 : 0) : mx === c[1] ? (c[2] - c[0]) / d + 2 : (c[0] - c[1]) / d + 4; hh *= 60; }
-    return [hh, s, l];
-  }
-  /* first colour of the list that reads well on `against`, else the one that reads best */
-  function best(against, list) {
-    var pick = list[0], top = 0;
-    for (var i = 0; i < list.length; i++) { var r = ratio(list[i], against); if (r >= MIN.text) return list[i]; if (r > top) { top = r; pick = list[i]; } }
-    return pick;
-  }
-  function auto(bg) { return best(bg, ['#F9FAFA', '#171A1C', '#FFFFFF', '#000000']); }
-  function autoBg(fg) { return best(fg, ['#0B0D0E', '#F9FAFA', '#FFFFFF', '#000000']); }
-  /* placeholder: 100% black or white (whichever contrasts more with the background) laid over it as a 35% overlay (3.17:1 on the default theme) */
-  function phColor(bg) { return mix(ratio('#FFFFFF', bg) >= ratio('#000000', bg) ? '#FFFFFF' : '#000000', bg, .35); }
-  /* the 100 compositions (background, foreground): every ordered pair of the palette's 22 colours that contrasts, ranked by ratio.
-     Each unordered pair appears both ways (light on dark and dark on light). Contrast ratio: 19.5 down to 4.43; 96 of them are >= 4.5. */
-  var PAIRS = [
-    ['#FFFFFF','#0B0D0E'], ['#0B0D0E','#FFFFFF'], ['#0B0D0E','#EEE6E1'], ['#EEE6E1','#0B0D0E'], ['#0B0D0E','#F8E869'],
-    ['#F8E869','#0B0D0E'], ['#0B0D0E','#D7E2DE'], ['#D7E2DE','#0B0D0E'], ['#FFFFFF','#4B2A28'], ['#4B2A28','#FFFFFF'],
-    ['#FFFFFF','#223E27'], ['#223E27','#FFFFFF'], ['#0B0D0E','#B4CCB5'], ['#B4CCB5','#0B0D0E'], ['#0B0D0E','#CFBFAC'],
-    ['#CFBFAC','#0B0D0E'], ['#EEE6E1','#4B2A28'], ['#4B2A28','#EEE6E1'], ['#0B0D0E','#80CE56'], ['#80CE56','#0B0D0E'],
-    ['#4B2A28','#F8E869'], ['#F8E869','#4B2A28'], ['#0B0D0E','#B4B3E1'], ['#B4B3E1','#0B0D0E'], ['#0B0D0E','#7EBFD9'],
-    ['#7EBFD9','#0B0D0E'], ['#EEE6E1','#223E27'], ['#223E27','#EEE6E1'], ['#4B2A28','#D7E2DE'], ['#D7E2DE','#4B2A28'],
-    ['#F8E869','#223E27'], ['#223E27','#F8E869'], ['#FFFFFF','#8A1D34'], ['#8A1D34','#FFFFFF'], ['#D7E2DE','#223E27'],
-    ['#223E27','#D7E2DE'], ['#0B0D0E','#CF9ED4'], ['#CF9ED4','#0B0D0E'], ['#0B0D0E','#E3954A'], ['#E3954A','#0B0D0E'],
-    ['#EEE6E1','#8A1D34'], ['#8A1D34','#EEE6E1'], ['#4B2A28','#B4CCB5'], ['#B4CCB5','#4B2A28'], ['#F8E869','#8A1D34'],
-    ['#8A1D34','#F8E869'], ['#CFBFAC','#4B2A28'], ['#4B2A28','#CFBFAC'], ['#8A1D34','#D7E2DE'], ['#D7E2DE','#8A1D34'],
-    ['#223E27','#B4CCB5'], ['#B4CCB5','#223E27'], ['#0B0D0E','#A58BDF'], ['#A58BDF','#0B0D0E'], ['#0B0D0E','#AC966A'],
-    ['#AC966A','#0B0D0E'], ['#4B2A28','#80CE56'], ['#80CE56','#4B2A28'], ['#CFBFAC','#223E27'], ['#223E27','#CFBFAC'],
-    ['#4B2A28','#B4B3E1'], ['#B4B3E1','#4B2A28'], ['#0B0D0E','#6194D6'], ['#6194D6','#0B0D0E'], ['#4B2A28','#7EBFD9'],
-    ['#7EBFD9','#4B2A28'], ['#223E27','#80CE56'], ['#80CE56','#223E27'], ['#B4B3E1','#223E27'], ['#223E27','#B4B3E1'],
-    ['#7EBFD9','#223E27'], ['#223E27','#7EBFD9'], ['#4B2A28','#CF9ED4'], ['#CF9ED4','#4B2A28'], ['#0B0D0E','#D74CD9'],
-    ['#D74CD9','#0B0D0E'], ['#FFFFFF','#626F42'], ['#626F42','#FFFFFF'], ['#CF9ED4','#223E27'], ['#223E27','#CF9ED4'],
-    ['#8A1D34','#B4CCB5'], ['#B4CCB5','#8A1D34'], ['#4B2A28','#E3954A'], ['#E3954A','#4B2A28'], ['#CFBFAC','#8A1D34'],
-    ['#8A1D34','#CFBFAC'], ['#FFFFFF','#866A4A'], ['#866A4A','#FFFFFF'], ['#0B0D0E','#D95736'], ['#D95736','#0B0D0E'],
-    ['#E3954A','#223E27'], ['#223E27','#E3954A'], ['#8A1D34','#80CE56'], ['#80CE56','#8A1D34'], ['#8A1D34','#B4B3E1'],
-    ['#B4B3E1','#8A1D34'], ['#8A1D34','#7EBFD9'], ['#7EBFD9','#8A1D34'], ['#4B2A28','#A58BDF'], ['#A58BDF','#4B2A28'],
-  ];
-  /* The interface is made of:
-       bg   page background
-       fg   ONE colour for the typography, the borders, the icons and the labels
-       ph   the placeholder, derived from bg: 100% black or white with a 35% overlay
-     Randomize picks one of the 100 pairs above, never the same background twice in a row (the default theme counts as #0B0D0E). */
-  function compose(prev) {
-    var prevBg = prev ? (prev.bg || D.bg) : null;   /* the default theme has no bg stored (null): compare with what is actually on screen */
-    var pool = PAIRS.filter(function (p) { return !prevBg || p[0] !== prevBg; });
-    var p = pool[Math.floor(Math.random() * pool.length)];
-    return { bg: p[0], fg: p[1] };
-  }
-  function meta(c) { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', c); }
-  /* the full map for a saved / chosen state: an unset colour is the default one */
-  function resolve(c) {
-    c = c || {};
-    var bg = c.bg || D.bg, fg = c.fg || D.fg;                    /* free choice: an unset colour is the default one, never derived from the other */
-    return { bg: bg, fg: fg, ph: phColor(bg) };
-  }
-  function apply(c) {
-    var s = document.documentElement.style, names = ['--c-bg', '--c-fg', '--c-ph', '--bgColor', '--textColor', '--c-glass'];
-    c = c || {};
-    if (!c.bg && !c.fg) { names.forEach(function (n) { s.removeProperty(n); }); window.__colorMap = null; meta(D.bg); return; }
-    var m = resolve(c);
-    var rgbv = rgb(m.bg), v = { '--c-bg': m.bg, '--c-fg': m.fg, '--c-ph': m.ph, '--bgColor': m.bg, '--textColor': m.fg, '--c-glass': 'rgba(' + rgbv.join(',') + ',.55)' };   /* --c-glass: the Info glass tint for browsers without color-mix() */
-    for (var k in v) s.setProperty(k, v[k]);
-    window.__colorMap = m;   /* the live map: bg, fg, ph */
-    meta(m.bg);
-  }
-  var c = null;
-  /* only palette colours are accepted: anything else (a hand-edited value, a colour from an old version) falls back to the default one */
-  function validate(c) {
-    if (!c || typeof c !== 'object') return null;
-    var ok = function (v) { return typeof v === 'string' && PAL.indexOf(v.toUpperCase()) > -1; };   /* PAL also holds null (the default swatch), which typeof rules out */
-    var out = { bg: ok(c.bg) ? c.bg.toUpperCase() : null, fg: ok(c.fg) ? c.fg.toUpperCase() : null };
-    return out.bg || out.fg ? out : null;
-  }
-  try {
-    c = JSON.parse(localStorage.getItem('clavier-colors') || 'null');
-    if (!c && localStorage.getItem('clavier-theme') === 'light') c = { bg: '#EEE6E1', fg: '#0B0D0E' };   /* the old light mode, as its nearest palette pair */
-  } catch (e) {}
-  c = validate(c);
-  window.__colors = c || {};
-  window.__colorUtil = { apply: apply, resolve: resolve, compose: compose, validate: validate, PAIRS: PAIRS, ratio: ratio, lum: lum, toHsl: toHsl, phColor: phColor, auto: auto, autoBg: autoBg, D: D, PAL: PAL, MIN: MIN, LEGIBLE: MIN.text };
-  apply(window.__colors);
-})();
-</script>
-    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Type anything. Play Clair de lune."><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#0B0D0E"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Type anything. Play Clair de lune."><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><meta data-n-head="1" data-hid="og:image" name="og:image" property="og:image" content="https://playclavier.vercel.app/og.png"><meta data-n-head="1" data-hid="og:image:width" name="og:image:width" property="og:image:width" content="1200"><meta data-n-head="1" data-hid="og:image:height" name="og:image:height" property="og:image:height" content="630"><meta data-n-head="1" data-hid="twitter:card" name="twitter:card" content="summary_large_image"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preload" href="/fonts/material-symbols/MaterialSymbolsSharp-Fill-v4.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/arizona/ABCArizonaTextTrial-Regular.otf" as="font" type="font/otf" crossorigin><link rel="preload" href="/fonts/arizona-sans/ABCArizonaSansTrial-Regular.otf" as="font" type="font/otf" crossorigin><style>@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
-@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-RegularItalic.otf) format("opentype");font-weight:400;font-style:italic;font-display:block}
-@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Bold.otf) format("opentype");font-weight:700;font-style:normal;font-display:block}
-@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-BoldItalic.otf) format("opentype");font-weight:700;font-style:italic;font-display:block}
-@font-face{font-family:"Arizona Sans";src:url(/fonts/arizona-sans/ABCArizonaSansTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
-</style>
+  <head>
+    <title>Clavier</title><meta data-n-head="1" charset="utf-8"><meta data-n-head="1" name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta data-n-head="1" data-hid="description" name="description" content="Type anything. Play Clair de lune."><meta data-n-head="1" data-hid="mobile-web-app-capable" name="mobile-web-app-capable" content="yes"><meta data-n-head="1" data-hid="apple-mobile-web-app-title" name="apple-mobile-web-app-title" content="Clavier"><meta data-n-head="1" data-hid="theme-color" name="theme-color" content="#0B0D0E"><meta data-n-head="1" data-hid="og:type" name="og:type" property="og:type" content="website"><meta data-n-head="1" data-hid="og:title" name="og:title" property="og:title" content="Clavier"><meta data-n-head="1" data-hid="og:site_name" name="og:site_name" property="og:site_name" content="Clavier"><meta data-n-head="1" data-hid="og:description" name="og:description" property="og:description" content="Type anything. Play Clair de lune."><meta data-n-head="1" data-hid="og:url" name="og:url" property="og:url" content="https://playclavier.vercel.app"><meta data-n-head="1" data-hid="og:image" name="og:image" property="og:image" content="https://playclavier.vercel.app/og.png"><meta data-n-head="1" data-hid="og:image:width" name="og:image:width" property="og:image:width" content="1200"><meta data-n-head="1" data-hid="og:image:height" name="og:image:height" property="og:image:height" content="630"><meta data-n-head="1" data-hid="twitter:card" name="twitter:card" content="summary_large_image"><link data-n-head="1" rel="icon" type="image/svg+xml" href="/favicon.svg"><link data-n-head="1" rel="icon" type="image/x-icon" href="/favicon.ico"><link data-n-head="1" rel="manifest" href="/_nuxt/manifest.4e439e09.json"><link data-n-head="1" rel="shortcut icon" href="/_nuxt/icons/icon_64.6c024e.png"><link data-n-head="1" rel="apple-touch-icon" href="/_nuxt/icons/icon_512.6c024e.png" sizes="512x512"><link rel="preload" href="/fonts/material-symbols/MaterialSymbolsSharp-Fill-v4.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/arizona/ABCArizonaTextTrial-Regular.otf" as="font" type="font/otf" crossorigin><link rel="preload" href="/fonts/arizona-sans/ABCArizonaSansTrial-Regular.otf" as="font" type="font/otf" crossorigin>
     <!-- Piano samples: Salamander Grand Piano (Yamaha C5) by Alexander Holm, CC BY 3.0 - see /credits.txt -->
     <link rel="author" href="/credits.txt">
+    <link rel="stylesheet" href="/css/tokens-v1.css">
+    <link rel="stylesheet" href="/css/base-v1.css">
+    <link rel="stylesheet" href="/css/controls-v1.css">
+    <link rel="stylesheet" href="/css/layout-v1.css">
+    <link rel="stylesheet" href="/css/info-v1.css">
+    <link rel="modulepreload" href="/js/main-v1.js">
+    <link rel="modulepreload" href="/js/state-v1.js">
+    <link rel="modulepreload" href="/js/render-v1.js">
+    <link rel="modulepreload" href="/js/dom-v1.js">
+    <link rel="modulepreload" href="/js/engine-bridge-v1.js">
+    <link rel="modulepreload" href="/js/controls-v1.js">
+    <link rel="modulepreload" href="/js/colors-ui-v1.js">
+    <link rel="modulepreload" href="/js/a11y-v1.js">
+    <link rel="modulepreload" href="/js/auto-type-v1.js">
+    <link rel="modulepreload" href="/js/poems-v1.js">
+    <link rel="modulepreload" href="/js/share-v1.js">
+    <link rel="modulepreload" href="/js/share-card-v1.js">
+    <link rel="modulepreload" href="/js/share-clip-v1.js">
+    <link rel="modulepreload" href="/js/audio-unlock-v1.js">
+    <link rel="modulepreload" href="/js/viewport-v1.js">
+    <link rel="modulepreload" href="/js/autoscroll-v1.js">
+    <link rel="modulepreload" href="/js/virtual-keyboard-v1.js">
+    <link rel="modulepreload" href="/js/stack-v1.js">
+    <link rel="modulepreload" href="/js/has-fallback-v1.js">
+    <script src="/js/colors-v1.js"></script>
     <script>
-      /* Mobile speakers: the signal first goes through a master chain
-         lowpass 3800 -> compressor -> gain(-4 dB) and uses the softer-envelope config. */
+      /* Bootstrap: the only inline logic. It runs before the first paint, so the page appears already in the right theme and layout.
+           - device: a phone (touch) or a narrow window gets the phone layout (class is-mobile); a window >= --bp-wide gets is-wide. The two
+             breakpoints come from css/tokens-v1.css (--bp-narrow, --bp-wide); they are classes because CSS cannot read variables in a media query.
+           - theme: the saved colours (validated against the palette) are written as CSS variables on <html>.
+           - Clavier: the one global, a read-only namespace (sealed in js/main-v1.js).
+         The tokens stylesheet and js/colors-v1.js are loaded above this script, so both are available here. */
       (function () {
+        'use strict';
+        var root = document.documentElement, cs = getComputedStyle(root);
+        var token = function (n) { return cs.getPropertyValue(n).trim(); };
+        var ns = window.Clavier = window.Clavier || {};
+        var colors = ns.createColors({ bg: token('--default-bg'), fg: token('--default-fg') });
+
+        /* ---- device ---- */
         var ua = navigator.userAgent || '';
-        var mobile = /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(ua) ||
+        var phone = /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(ua) ||
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
-        var root = document.documentElement;
-        if (mobile) { root.classList.add('is-mobile'); window.__audioConfig = 'audio/config.mobile.js'; }
-        /* a narrow window gets the phone layout too (browser device emulation, resized windows), live: the class follows the width */
-        /* The only two breakpoints of the interface. CSS cannot read variables inside a media query, so they live here and reach the CSS as classes:
-             is-mobile = phone layout (a phone, or a window <= NARROW_MAX px); is-wide = a window >= WIDE_MIN px (22-swatch palette row, 4-column Info).
-           820..1024 is the desktop layout with the same 40px margins as a wide window. */
-        var NARROW_MAX = 820, WIDE_MIN = 1024;
-        var nq = window.matchMedia && window.matchMedia('(max-width: ' + NARROW_MAX + 'px)'), wq = window.matchMedia && window.matchMedia('(min-width: ' + WIDE_MIN + 'px)');
-        function sync() { root.classList.toggle('is-mobile', mobile || !!(nq && nq.matches)); root.classList.toggle('is-wide', !!(wq && wq.matches)); }
-        [nq, wq].forEach(function (q) { if (q) { if (q.addEventListener) q.addEventListener('change', sync); else if (q.addListener) q.addListener(sync); } });
-        sync();
-        if (!mobile) return;
-        /* Share clip: the signal that reaches the speakers (after the master chain below, which wraps this) is ALSO copied into an in-memory MediaStream.
-           Nothing is recorded by this alone; the clip recorder in the Share script only reads this stream during the first 10 s of a session. */
-        (function () {
-          var taps = new WeakMap(), base = AudioNode.prototype.connect;
-          AudioNode.prototype.connect = function (dest) {
-            if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode) {
-              try {
-                var ctx = dest.context, t = taps.get(ctx);
-                if (!t && ctx.createMediaStreamDestination) { t = ctx.createMediaStreamDestination(); taps.set(ctx, t); window.__tap = t; }
-                if (t) base.call(this, t);
-              } catch (e) {}
-            }
-            return base.apply(this, arguments);
-          };
-        })();
-        var chains = new WeakMap(), rawConnect = AudioNode.prototype.connect;
-        AudioNode.prototype.connect = function (dest) {
-          if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {
-            var ctx = dest.context;
-            {
-              var ch = chains.get(ctx);
-              if (!ch) {
-                var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.7;
-                var comp = ctx.createDynamicsCompressor();
-                comp.threshold.value = -24; comp.knee.value = 30; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
-                var g = ctx.createGain(); g.gain.value = Math.pow(10, -4 / 20);
-                lp.__clavierMaster = comp.__clavierMaster = g.__clavierMaster = true;
-                rawConnect.call(lp, comp); rawConnect.call(comp, g); rawConnect.call(g, dest);
-                ch = lp; chains.set(ctx, ch); window.__masterChain = ch;
-              }
-              var rest = Array.prototype.slice.call(arguments, 1);
-              return rawConnect.apply(this, [ch].concat(rest)), dest;
-            }
+        var nq = window.matchMedia('(max-width: ' + (+token('--bp-narrow')) + 'px)'), wq = window.matchMedia('(min-width: ' + (+token('--bp-wide')) + 'px)');
+        var mobile = null, wide = null;
+        function layout() {
+          var m = phone || nq.matches, w = wq.matches;
+          if (m === mobile && w === wide) return;
+          mobile = m; wide = w;
+          root.classList.toggle('is-mobile', m); root.classList.toggle('is-wide', w);
+          window.dispatchEvent(new Event('clavier:layout'));
+        }
+        [nq, wq].forEach(function (q) { if (q.addEventListener) q.addEventListener('change', layout); else if (q.addListener) q.addListener(layout); });
+        layout();
+        /* the engine's own contract: which audio config it loads (the phone one has softer envelopes) */
+        if (phone) window.__audioConfig = 'audio/config.mobile.js';
+
+        /* ---- theme ---- */
+        var choice = { bg: null, fg: null }, map = null, listeners = [];
+        try {
+          var raw = JSON.parse(localStorage.getItem('clavier-colors') || 'null');
+          if (!raw && localStorage.getItem('clavier-theme') === 'light') raw = { bg: '#EEE6E1', fg: '#0B0D0E' };   /* the old light mode, as its nearest palette pair */
+          var ok = colors.validate(raw); if (ok) choice = ok;
+        } catch (e) {}
+        function paint() {
+          var s = root.style, names = ['--c-bg', '--c-fg', '--c-ph', '--c-glass', '--bgColor', '--textColor'];
+          if (!choice.bg && !choice.fg) { names.forEach(function (n) { s.removeProperty(n); }); map = colors.resolve({}); }
+          else {
+            map = colors.resolve(choice);
+            var v = { '--c-bg': map.bg, '--c-fg': map.fg, '--c-ph': map.ph, '--c-glass': map.glass, '--bgColor': map.bg, '--textColor': map.fg };   /* --bgColor / --textColor: read by the app bundle */
+            for (var k in v) s.setProperty(k, v[k]);
           }
-          return rawConnect.apply(this, arguments);
+          var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', map.bg);
+        }
+        paint();
+        var theme = {
+          get choice() { return { bg: choice.bg, fg: choice.fg }; },        /* what the user picked (null = the default colour) */
+          get map() { return map; },                                         /* what is on screen: bg, fg, ph, glass */
+          set: function (c) {
+            choice = { bg: c.bg || null, fg: c.fg || null }; paint();
+            try { if (choice.bg || choice.fg) localStorage.setItem('clavier-colors', JSON.stringify(choice)); else localStorage.removeItem('clavier-colors'); localStorage.removeItem('clavier-theme'); } catch (e) {}
+            listeners.forEach(function (fn) { fn(); });
+          },
+          onChange: function (fn) { listeners.push(fn); },
         };
-      })();
-    </script>
-    <script>
-      /* Info view controller. The address bar always stays on the bare domain. */
-      (function () {
-        var ua = navigator.userAgent, safari = /iPad|iPhone|iPod/.test(ua) || (/^((?!chrome|android|crios|fxios).)*safari/i.test(ua));
-        if (safari) { var cpt = HTMLMediaElement.prototype.canPlayType; HTMLMediaElement.prototype.canPlayType = function (t) { return /ogg|opus|vorbis/i.test(t) ? '' : cpt.call(this, t); }; }
-      })();
-      (function () {
-        var root = document.documentElement;
-        function isOpen() { return root.classList.contains('info-open'); }
-        function field() { return document.querySelector('textarea'); }
-        function open(push) {
-          if (isOpen()) return;
-          if (window.__autoStop) window.__autoStop();
-          if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-          root.classList.add('info-open');
-          var bg = document.getElementById('__nuxt'); if (bg) { bg.setAttribute('aria-hidden', 'true'); bg.inert = true; }   /* the page behind the dialog is out of reach */
-          var v = document.getElementById('info-view'); if (v) v.focus({ preventScroll: true });
-        }
-        function close(fromPop, viaKey) {
-          if (!isOpen()) return;
-          root.classList.remove('info-open');
-          var bg = document.getElementById('__nuxt'); if (bg) { bg.removeAttribute('aria-hidden'); bg.inert = false; }
-          /* Esc hands focus back to the "i" button that opened Info (when it is on screen); every other way out goes to the field */
-          var ib = document.getElementById('t-info');
-          if (viaKey && ib && root.classList.contains('tools-open')) { ib.focus({ preventScroll: true }); return; }
-          var t = field(); if (t) t.focus({ preventScroll: true });
-        }
-        window.__openInfo = function () { open(true); };
-        window.__closeInfo = function () { close(false); };
-        /* One address only: Info never touches the URL (no #info, no sub-links). An old /#info link simply lands on the home screen. */
+
+        Object.defineProperty(ns, 'colors', { value: colors, enumerable: true });
+        Object.defineProperty(ns, 'device', { value: Object.freeze({ phone: !!phone }), enumerable: true });
+        Object.defineProperty(ns, 'theme', { value: theme, enumerable: true });
+
+        /* one address only: the Info page never touches the URL; an old /#info link simply lands on the home screen */
         if (location.hash === '#info') history.replaceState(null, '', location.pathname + location.search);
-        /* While Info is open the keyboard must not play or type into the app behind it. */
-        window.addEventListener('keydown', function (e) {
-          if (!isOpen()) return;
-          if (e.key === 'Escape') { close(false, true); e.preventDefault(); e.stopImmediatePropagation(); return; }   /* Esc closes Info only; the tools stay open and the focus goes back to "i" */
-          if (e.metaKey || e.ctrlKey || e.altKey) return;
-          if (e.target && e.target.closest && e.target.closest('#ui')) return;   /* the controls stay operable from the keyboard while Info is open */
-          e.stopImmediatePropagation();
-          if (e.key !== 'Tab' && !/^(Arrow(Up|Down)|Page(Up|Down)|Home|End| )$/.test(e.key)) e.preventDefault();
-        }, true);
       })();
     </script>
-    <style>
-      /* Critical inline CSS: paints the correct theme before any JS/async CSS
-         loads, eliminating the flash of unstyled (browser-default gray/white)
-         background during initial load and reloads. */
-      :root { --sab: env(safe-area-inset-bottom, 0px); }
-      html, body {
-        overscroll-behavior: none;
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        height: 100dvh;
-        width: 100%;
-        overflow: hidden;
-        background-color: var(--c-bg, #0B0D0E);
-        color: var(--c-fg, #F9FAFA);
-      }
-      #__nuxt {
-        height: 100%;
-        background-color: var(--c-bg, #0B0D0E);
-      }
-    </style>
-    <style>
-      /* Controls: a "+" button bottom-left (opens/closes the tools dock), an "i" button bottom-right (Info) and a central
-         dock (PLAY / AUTO-JAM / NEW). Square buttons, 6px corners, thin border; 40px from the grid margins (20px on mobile). */
-      html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; --block-gap: 24px; --clear: 32px;
-        --stack-h: calc(var(--dock-b) + var(--btn) + var(--sab, 0px)); --stack-max: var(--stack-h); }   /* --stack-h / --stack-max are MEASURED from #stack (script at the end of the body); these are the first-paint values */
-      html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; --block-gap: 12px; --gap: var(--block-gap); --clear: 16px; }   /* phones: tight, every distance between button rows is the same 12px, and the text stops 16px above the buttons */
-      #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
-      /* phones: the layer follows the VISUAL viewport (set live from JS): same height, same offset, GPU-translated */
-      .is-mobile #ui { inset: auto; left: 0; top: 0; width: 100%; height: var(--ui-h, 100dvh); transform: translate3d(0, var(--ui-top, 0px), 0); }   /* passive: only the buttons take clicks */
-      /* buttons have no fill: the writing field ends above them (a clear band), so nothing scrolls underneath */
-      #ui button {
-        pointer-events: auto; font-family: "Arizona Sans", sans-serif; font-weight: 400; color: var(--c-fg, #F9FAFA); background: transparent;
-        cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
-        -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
-      }
-      /* keyboard focus only: a ring shows for Tab / arrow navigation, never after a click or a tap (:focus-visible) */
-      #ui button:focus-visible { outline: 1px solid var(--c-fg, #F9FAFA); outline-offset: 2px; border-radius: 6px; }
-      #ui #palette button:focus-visible { outline-offset: -3px; border-radius: 0; }   /* swatches sit flush inside a clipped box: the ring goes inside */
-      /* the controls are ONE bottom-anchored stack (palette, dock, corner buttons) laid out in normal flow, so nothing is positioned with fixed multiples */
-      #ui #stack {
-        position: absolute; left: max(var(--edge), env(safe-area-inset-left, 0px)); right: max(var(--edge), env(safe-area-inset-right, 0px)); bottom: calc(var(--dock-b) + var(--sab, 0px));
-        display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "pal pal pal" "plus dock info"; row-gap: var(--gap); align-items: end; pointer-events: none;
-      }
-      #ui #stack > #palette { grid-area: pal; justify-self: center; }
-      #ui #stack > #dock { grid-area: dock; }
-      #ui #stack > #t-plus { grid-area: plus; justify-self: start; }
-      #ui #stack > #t-info { grid-area: info; justify-self: end; }
-      #ui .corner {
-        width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
-        display: flex; align-items: center; justify-content: center;
-      }
-      /* Info stays in the right corner but belongs to the expanded state: it shows and collapses together with the tools */
-      /* hidden by opacity + pointer-events + the inert attribute (set from JS with the tools state); NO visibility transition: Safari can leave an element
-         that transitions visibility inside a translate3d layer (#ui on phones) painted. The 0.2s fade stays on the opacity. */
-      #ui #t-info { opacity: 0; pointer-events: none; transition: opacity .2s ease !important; }
-      .tools-open #ui #t-info { opacity: 1; pointer-events: auto; }
-      /* corner buttons are set as type, like every other label: +, X and I */
-      /* every control is a Material Symbols Sharp, filled icon (self-hosted subset, 24px) */
-      @font-face { font-family: "Material Symbols Sharp"; font-style: normal; font-weight: 100 700; font-display: block; src: url(/fonts/material-symbols/MaterialSymbolsSharp-Fill-v4.woff2) format("woff2"); }
-      #ui .ms {
-        font-family: "Material Symbols Sharp"; font-weight: 400; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr;
-        font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; -webkit-font-feature-settings: "liga"; font-feature-settings: "liga"; -webkit-font-smoothing: antialiased;
-        display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; overflow: hidden;
-      }
-      #ui #t-plus .x, .tools-open #ui #t-plus .p { display: none; }
-      .tools-open #ui #t-plus .x { display: block; }
-      #ui #dock {
-        display: flex; gap: var(--block-gap); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;   /* 24px between button blocks */
-      }
-      .tools-open #ui #dock { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-      .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }   /* visually hidden, still read by screen readers */
-      #toast { position: absolute; transform: translateX(-50%); display: none; pointer-events: none; color: var(--c-fg, #F9FAFA);
-        font: 400 13px/1 "Arizona Sans", sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }   /* text only, above the Share button */
-      #toast.on { display: block; }
-      #ui .blk { height: var(--btn); display: flex; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px; }
-      #ui .blk button { height: 100%; width: var(--btn); padding: 0; border: 0; border-radius: 0; line-height: 1; display: flex; align-items: center; justify-content: center; }
-      #ui .blk button + button { border-left: 1px solid var(--c-fg, #F9FAFA); }
-      #ui .blk button:first-child { border-radius: 5px 0 0 5px; } #ui .blk button:last-child { border-radius: 0 5px 5px 0; }
-      #ui .blk button:only-child { border-radius: 5px; }
-      /* colour tools: background fill, text colour, randomise (icon buttons) + the palette strip. No hover / pressed / focus states anywhere. */
-      #ui { --sw: 40px; }
-      #ui #palette {
-        display: flex; flex-wrap: wrap; box-sizing: border-box; overflow: hidden;
-        width: calc(var(--sw) * 22 + 2px); border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
-        opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s;
-      }
-      .tools-open.palette-open #ui #palette { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-      #ui #palette button { position: relative; width: var(--sw); height: var(--sw); padding: 0; border: 0; border-radius: 0; background: var(--sw-c); }
-      #ui #palette button.none { background: #000; }   /* flat black = back to the default colours */
-      #ui #palette button[aria-pressed="true"]::after {
-        content: ""; position: absolute; inset: 0; margin: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--dot);
-      }
-      html:not(.is-wide) #ui { --sw: min(40px, calc((100vw - 2 * var(--edge) - 2px) / 11)); } html:not(.is-wide) #ui #palette { width: calc(var(--sw) * 11 + 2px); }   /* narrower than WIDE_MIN: 11 swatches per row */
-      /* phones: the dock is ALWAYS a 2-row grid, on every width (it used to wrap by itself, so a 390px phone and a 430px phone had different docks).
-         Row 1: NEW | PLAY + AUTO-JAM | SHARE (right-aligned). Row 2: THEME + FONT + SHUFFLE. The palette sits above it. */
-      .is-mobile #ui #dock { display: grid; grid-template-columns: max-content max-content 1fr; column-gap: var(--block-gap); row-gap: var(--block-gap); align-items: start; justify-content: stretch;
-      }
-      .is-mobile #ui #stack { grid-template-columns: 1fr 1fr; grid-template-areas: "pal pal" "dock dock" "plus info"; }
-      .is-mobile #ui #dock > .blk:nth-child(1) { grid-area: 1 / 1; }
-      .is-mobile #ui #dock > .blk:nth-child(2) { grid-area: 1 / 2; }
-      .is-mobile #ui #dock > .blk:nth-child(4) { grid-area: 1 / 3; justify-self: end; }
-      .is-mobile #ui #dock > .blk:nth-child(3) { grid-area: 2 / 1 / 3 / 4; justify-self: start; }
-      /* Text box inset: reset the legacy paddings so the grid below rules.
-         Scoped with :has() so it only touches the home-page section/container
-         and never the ModalWrapper instance (song picker, info, share), which
-         reuses the same .section/.container class names. */
-      .section:has(> .container > .main-wrapper) {
-        padding: 0 !important;
-      }
-      .container:has(> .main-wrapper) {
-        margin: 0 !important;
-        width: 100% !important;
-      }
-      /* browsers without :has(): the same two resets through classes that a script puts on the home section / container (see "fallback for :has()") */
-      .is-home-section { padding: 0 !important; }
-      .is-home-container { margin: 0 !important; width: 100% !important; }
-      .main-wrapper {
-        padding: 0 !important;
-      }
-      .main-wrapper .main {
-        padding: 0 !important;
-        width: 100% !important;
-        height: 100dvh !important;
-        box-sizing: border-box !important;
-      }
-      textarea {
-        caret-color: var(--c-fg, #F9FAFA) !important;
-      }
-      textarea::placeholder {
-        color: var(--c-ph, #606262) !important;   /* default theme: white at 35% over #0B0D0E */
-        opacity: 1 !important;
-      }
-      /* Writing area: 40px on every side (phones override this below) */
-      textarea {
-        --m: 40px;
-        --ml: 40px;
-        --lim: calc(var(--stack-h) + var(--clear));   /* the text never runs closer than --clear to the controls (whatever is open, palette included): it scrolls instead */
-        margin: var(--m) var(--m) var(--lim) var(--ml) !important;
-        padding: 0 !important;
-        width: calc(100% - var(--ml) - var(--m)) !important;
-        height: calc(100dvh - var(--m) - var(--lim)) !important;
-        box-sizing: border-box !important;
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
-      }
-      textarea::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-      /* Desktop: the text runs from column 1 to column 12 of a 12-col grid (40px margins, 48px gutters); the same margins from 821px up */
-      html:not(.is-mobile) textarea {
-        --gx: 40px;   /* column 1 to column 12: edge to edge of the grid */
-        margin-left: var(--gx) !important;
-        margin-right: var(--gx) !important;
-        width: calc(100vw - 2 * var(--gx)) !important;
-      }
-      /* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive).
-         Glass background (translucent + blur), text block centred in the interface over 4 grid columns, left aligned. */
-      #info-view {
-        position: fixed; inset: 0; z-index: 90;
-        background-color: var(--c-glass, rgba(11, 13, 14, .55)); background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);   /* the 2nd declaration wins where color-mix() exists */
-        -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
-        padding: calc(var(--stack-max) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
-        display: flex; flex-direction: column;
-        font-family: "Arizona Sans", sans-serif; font-weight: 400;
-        opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
-        height: 100vh; height: 100dvh;
-        overflow: hidden; outline: none;   /* the text scrolls inside .info-in, which stops above the buttons: that band stays clear */
-      }
-      #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: 0; width: 100%; text-align: left; display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
-      #info-view .info-in::-webkit-scrollbar { display: none; }
-      /* Info type: Arizona Sans, 28px / 35px, on desktop and phones */
-      #info-view p { font-family: "Arizona Sans", sans-serif; font-size: 28px; font-weight: 400; line-height: 35px; letter-spacing: 0; margin: 0 0 35px; color: var(--c-fg, #F9FAFA); }
-      #info-view p:last-child { margin-bottom: 0; }
-      /* the text block is centred on the screen and spans 4 columns of the grid (desktop: columns 5 to 8 of 12; phones: the 4 columns are the full width) */
-      #info-view .info-in > p { width: 100%; }
-      #info-view .info-in > p:first-child { margin-top: auto; }
-      #info-view .info-in > p:last-child { margin-bottom: auto; }   /* auto margins centre the block vertically and fall back to the top when it is taller than the area */
-      html.is-wide:not(.is-mobile) #info-view .info-in > p { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
-      .info-open #info-view { opacity: 1; visibility: visible; }
-      /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
-      html.info-open textarea { caret-color: transparent !important; }
-      /* colour changes are instant, and the text field has no box of its own (it shows the page colour) */
-      html body, html #__nuxt { transition: none !important; }
-      html textarea { background-color: transparent !important; transition: none !important; }
-      /* Mobile / touch layout (class set before first paint by the head script) */
-      .is-mobile textarea {
-        --mx: var(--edge);
-        --mt: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px);
-        --mb: calc(var(--stack-h) + var(--clear));
-        margin: var(--mt) max(var(--mx), env(safe-area-inset-right, 0px)) 0 max(var(--mx), env(safe-area-inset-left, 0px)) !important;
-        padding: 0 !important;   /* like desktop: the field ENDS above the buttons (a clear bottom band), the text scrolls inside it */
-        width: calc(100% - max(var(--mx), env(safe-area-inset-left, 0px)) - max(var(--mx), env(safe-area-inset-right, 0px))) !important;
-        height: calc(var(--vvh, 100dvh) - var(--mt) - var(--mb)) !important;
-        font-size: 40px !important; line-height: 1.25 !important;
-      }
-      /* phones: the root is locked to the screen (no rubber-band scrolling in iOS Safari) */
-      html.is-mobile, html.is-mobile body { position: fixed; inset: 0; width: 100%; height: 100dvh; overflow: hidden; }
-      .is-mobile .main-wrapper .main {
-        position: fixed !important; left: 0 !important; top: var(--vvt, 0px) !important;
-        width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
-      }
-      .is-mobile #info-view {
-        padding: calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
-      }
-    </style>
+    <script src="/js/mobile-audio-chain-v1.js"></script>
   </head>
   <body>
     <main>
@@ -445,583 +132,11 @@
   <section id="info-view" role="dialog" aria-modal="true" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><p class="lead">Design and Code by Danilo Amorim.</p></div></section>
     </main>
   <script>
-    (function () {
-      var ua = navigator.userAgent || '';
-      var mobile = /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(ua) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-        (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
-      if (mobile) document.documentElement.classList.add('is-mobile');
-      ["/_nuxt/a97ff0af771ea114ad33.js", "/_nuxt/475e5faa9cb04d524d9d.js", "/_nuxt/e52102afb3cb9c331891.js", "/_nuxt/238870880c42d0488215.js"].forEach(function (src) {
-        var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
-      });
-    })();
+    /* loads the compiled app (Nuxt / Vue 2) in order, without waiting for our own modules */
+    ["/_nuxt/a97ff0af771ea114ad33.js", "/_nuxt/475e5faa9cb04d524d9d.js", "/_nuxt/e52102afb3cb9c331891.js", "/_nuxt/238870880c42d0488215.js"].forEach(function (src) {
+      var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
+    });
   </script>
-  <script>
-    /* fallback for :has(): browsers that cannot match the home section by its content get the same two resets through classes */
-    (function () {
-      if (window.CSS && CSS.supports && CSS.supports('selector(:has(*))')) return;
-      function mark() {
-        var w = document.querySelector('.main-wrapper'); if (!w) return false;
-        var c = w.parentElement, sec = c && c.parentElement;
-        if (c && c.classList.contains('container')) { c.classList.add('is-home-container'); if (sec && sec.classList.contains('section')) sec.classList.add('is-home-section'); }
-        return true;
-      }
-      var mo = new MutationObserver(function () { if (mark()) mo.disconnect(); });
-      mo.observe(document.documentElement, { childList: true, subtree: true }); mark();
-    })();
-  </script>
-  <script>
-    (function () {
-      var ta = null;
-      function grab() {
-        ta = ta || document.querySelector('textarea');
-        if (!ta) return false;
-        if (document.activeElement !== ta) ta.focus({ preventScroll: true });
-        return true;
-      }
-      var mo = new MutationObserver(function () { if (grab()) mo.disconnect(); });
-      mo.observe(document.documentElement, { childList: true, subtree: true });
-      grab();
-      window.addEventListener('keydown', function (e) {
-        if (e.metaKey || e.ctrlKey || e.altKey || !ta) return;
-        /* Only keys that produce text go back to the field: a character, Backspace, and Enter when no button has the focus.
-           While a button of #ui has the focus nothing is redirected (Tab, Enter, Space, arrows... belong to the button). */
-        var a = document.activeElement;
-        if (a === ta || (a && a.closest && a.closest('#ui'))) return;
-        if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') ta.focus({ preventScroll: true });
-      }, true);
-    })();
-  </script>
-  <script>
-    /* Auto-Type with emotional concepts. Each concept sets the typing tempo:
-       delay +/- randomVariation (ms) between characters, plus a breathing pause
-       after punctuation. One real keydown per character (same MIDI step as a
-       user keystroke). The poem is always typed to its final full stop; it only
-       stops when the user types (a character/edit key), clicks elsewhere, or
-       starts a new Auto-Type. Modifier keys and shortcuts (e.g. screenshots,
-       copy) never interrupt it. */
-    (function () {
-      var CONCEPTS = [
-        { id: 'melancholy', delay: 350, randomVariation: 150, poems: [
-            "Play the silence between the notes.\nListen as the echoes drift into the dark,\nleaving only a gentle resonance behind.",
-            "The house is quiet now, and the piano waits.\nEvery key still holds a little of the rain,\na little of the light that used to stay.",
-            "Some songs are only ever half remembered.\nI let the last chord ring until it fades,\nand sit inside the stillness it leaves.",
-            "Nothing moves but the dust in the window light.\nA single note, then another, then the long quiet\nthat gathers where the music used to be." ] },
-        { id: 'nostalgia', delay: 220, randomVariation: 80, poems: [
-            "A distant melody lingers in the evening air.\nEvery key brings back a memory soft as shadow\nand golden as dusk, a waltz we once knew\nby heart, still turning somewhere in the dark.",
-            "The streetlights come on one by one.\nSomewhere a window glows in a minor key,\nand the whole afternoon folds itself away\nlike a letter we meant to answer, long ago.",
-            "We were younger in that last chord.\nThe evening keeps the tune we forgot,\nand hums it back to us, slow and warm,\nthe way old houses remember footsteps.",
-            "Summer ends the way a song does,\nnot with a sound but with a softer light.\nWe stand a while at the edge of it,\nlistening to everything we used to be." ] },
-        { id: 'ecstasy', delay: 90, randomVariation: 30, poems: [
-            "Let the rhythm overflow with sudden light,\ncascading through every key like a storm\nof sound and pure motion!\nFaster, brighter, higher: the whole room is singing,\nthe whole sky is a glissando,\nand nothing, nothing at all, is standing still.\nOpen every window and let the music out;\nlet it run down the street, laughing, shining.",
-            "Joy takes the stairs two at a time,\ntumbling up the keyboard in a shower of gold!\nEvery note is a spark, every spark a sunrise,\nand the music runs ahead of us, laughing,\nwide open, unstoppable, impossibly bright.\nDon't stop now; don't even breathe.\nThe whole world is spinning in three-four time,\nand we are the ones holding the light.",
-            "The whole sky is a glissando, and we are in it!\nHands like wings, a flood of silver notes,\nrunning, leaping, spinning into the light.\nLet it cascade, let it overflow, let it blaze,\nuntil the last bright chord breaks over us like the sea.\nAgain, again, faster: the night is ours,\nand every heartbeat is a drum, a drum, a drum." ] }
-      ];
-      window.__CLAVIER_CONCEPTS = CONCEPTS;
-      var PAUSE_CHARS = ',.;:!?\n', PAUSE_MIN = 200, PAUSE_MAX = 400;
-      var CODES = { '.': 190, ',': 188, ';': 186, "'": 222, '-': 189, '?': 191, '!': 49, ':': 186 };
-      var MODIFIERS = ['Shift', 'Control', 'Alt', 'AltGraph', 'Meta', 'OS', 'CapsLock', 'Fn', 'FnLock', 'ContextMenu'];
-      /* Every poem must be a complete text ending in a single full stop, and last at least MIN_MS
-         (expected duration = concept delay per character + the mean pause on punctuation/newlines). */
-      var MIN_MS = 30000;
-      function estimateMs(c, s) {
-        var n = 0;
-        for (var i = 0; i < s.length; i++) n += c.delay + (PAUSE_CHARS.indexOf(s.charAt(i)) > -1 ? (PAUSE_MIN + PAUSE_MAX) / 2 : 0);
-        return n;
-      }
-      function complete(s) { return /[^.]\.$/.test(s); }
-      /* the poems are validated by tests/specs/autojam.spec.js (complete, one final full stop, >= MIN_MS); nothing is filtered silently at runtime */
-      window.__clavierEstimate = estimateMs;
-      var conceptBag = [], poemBags = {}, lastConcept = -1;
-      var timer = null, running = false, runId = 0, idx = 0, text = '', current = null;
-      function field() { return document.querySelector('textarea'); }
-      function shuffle(a) { for (var k = a.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)), x = a[k]; a[k] = a[j]; a[j] = x; } return a; }
-      function pickConcept() {
-        var usable = CONCEPTS.filter(function (c) { return c.poems.length; });
-        if (!usable.length) return null;
-        if (!conceptBag.length) {
-          conceptBag = shuffle(CONCEPTS.map(function (c, i) { return c.poems.length ? i : -1; }).filter(function (i) { return i > -1; }));
-          if (conceptBag[conceptBag.length - 1] === lastConcept) conceptBag.unshift(conceptBag.pop());
-        }
-        lastConcept = conceptBag.pop(); return CONCEPTS[lastConcept];
-      }
-      function pickPoem(c) {
-        var bag = poemBags[c.id];
-        if (!bag || !bag.length) poemBags[c.id] = bag = shuffle(c.poems.map(function (_, i) { return i; }));
-        return c.poems[bag.pop()];
-      }
-      function keyInfo(ch) {
-        if (ch === '\n') return { key: 'Enter', code: 'Enter', kc: 13 };
-        var kc = /[a-z]/i.test(ch) ? ch.toUpperCase().charCodeAt(0) : (CODES[ch] || ch.charCodeAt(0));
-        return { key: ch, code: '', kc: kc };
-      }
-      function gap(ch) {
-        var d = current.delay + (Math.random() * 2 - 1) * current.randomVariation;
-        if (PAUSE_CHARS.indexOf(ch) > -1) d += PAUSE_MIN + Math.random() * (PAUSE_MAX - PAUSE_MIN);
-        return Math.max(40, d);
-      }
-      var rootEl = document.documentElement;   /* html.auto-on is set while Auto-Type is running */
-      function stop() { runId++; if (timer) { clearTimeout(timer); timer = null; } running = false; rootEl.classList.remove('auto-on'); }
-      function step(id) {
-        timer = null;
-        if (!running || id !== runId) return;
-        var t = field();
-        if (!t || idx >= text.length) { running = false; rootEl.classList.remove('auto-on'); return; }
-        var ch = text.charAt(idx++), k = keyInfo(ch);
-        t.dispatchEvent(new KeyboardEvent('keydown', { key: k.key, code: k.code, keyCode: k.kc, which: k.kc, bubbles: true, cancelable: true }));
-        if (t !== document.activeElement) t.focus({ preventScroll: true });
-        if (!document.execCommand('insertText', false, ch)) {
-          t.value += ch; t.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        timer = setTimeout(function () { step(id); }, gap(ch));
-      }
-      window.__autoType = function (conceptId) {
-        stop();
-        var forced = conceptId && CONCEPTS.filter(function (c) { return c.id === conceptId; })[0];
-        current = (forced && forced.poems.length) ? forced : pickConcept(); if (!current) return;   /* no usable poem: do nothing instead of throwing */
-        text = pickPoem(current); idx = 0;
-        if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
-        var t = field(); if (t) t.focus({ preventScroll: true });
-        running = true; rootEl.classList.add('auto-on'); var id = runId;
-        timer = setTimeout(function () { step(id); }, 450);
-      };
-      window.__autoStop = stop;
-      window.addEventListener('keydown', function (e) {
-        if (!running || !e.isTrusted) return;
-        if (MODIFIERS.indexOf(e.key) > -1) return;
-        if (e.metaKey || e.ctrlKey || e.altKey) return;
-        stop();
-      }, true);
-      window.addEventListener('pointerdown', function (e) {
-        if (running && e.isTrusted && !(e.target.closest && e.target.closest('#t-auto'))) stop();
-      }, true);
-    })();
-  </script>
-  <script>
-    /* Auto-scroll: while text is added at the end (typed or Auto-Type), scroll the
-       field up smoothly so the current line always stays visible. The field keeps
-       about one line of empty room after the last line (padding-bottom), so a newly
-       started line is never cut by the bottom edge. */
-    (function () {
-      var raf = 0;
-      function keep(t) {
-        if (!t || t.selectionStart !== t.value.length) return;
-        var max = t.scrollHeight - t.clientHeight;
-        if (max > t.scrollTop + 1) t.scrollTo({ top: max, behavior: 'smooth' });
-      }
-      document.addEventListener('input', function (e) {
-        var t = e.target;
-        if (!t || t.tagName !== 'TEXTAREA') return;
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(function () { keep(t); });
-      }, true);
-    })();
-  </script><script>
-    /* Dock helpers: buttons never steal focus from the textarea. Mobile also tracks the on-screen keyboard. */
-    (function () {
-      var root = document.documentElement;
-      var mobile = root.classList.contains('is-mobile');
-      var vv = window.visualViewport;
-      if (mobile) {
-      function layout() {
-        var h = vv ? vv.height : window.innerHeight, t = vv ? vv.offsetTop : 0;
-        /* the controls layer = the visible area, always (not only while a keyboard is up) */
-        root.style.setProperty('--ui-h', h + 'px');
-        root.style.setProperty('--ui-top', t + 'px');
-        var kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
-        if (kb > 80) {
-          /* keyboard up: pin the writing area to the visible viewport, no safe-area under the keyboard */
-          root.style.setProperty('--vvh', vv.height + 'px');
-          root.style.setProperty('--vvt', vv.offsetTop + 'px');
-          root.style.setProperty('--sab', '0px');
-        } else {
-          /* no keyboard: static CSS (100dvh, env(safe-area-*)) lays the writing area out */
-          ['--vvh', '--vvt', '--sab'].forEach(function (k) { root.style.removeProperty(k); });
-        }
-        if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
-      }
-      if (vv) { vv.addEventListener('resize', layout); vv.addEventListener('scroll', layout); }
-      window.addEventListener('resize', layout); window.addEventListener('scroll', layout, { passive: true });
-      window.addEventListener('orientationchange', function () { watch(1500); });
-      /* iOS: the resize event for a closing keyboard can be late or missing, so measure on a short timer while the
-         writing field has focus and for a moment after it loses it (and after touches / returning to the tab). */
-      var poll = null, pollUntil = 0;
-      function watch(ms) {
-        pollUntil = Math.max(pollUntil, Date.now() + ms);
-        if (poll) return;
-        poll = setInterval(function () {
-          layout();
-          if (Date.now() > pollUntil && !(document.activeElement && document.activeElement.tagName === 'TEXTAREA')) { clearInterval(poll); poll = null; }
-        }, 100);
-      }
-      function settle() { window.scrollTo(0, 0); if (vv) vv.dispatchEvent(new Event('resize')); layout(); }
-      document.addEventListener('focus', function (e) { if (e.target && e.target.tagName === 'TEXTAREA') watch(1500); }, true);
-      document.addEventListener('blur', function (e) {
-        if (!e.target || e.target.tagName !== 'TEXTAREA') return;
-        settle(); [60, 160, 320, 600, 1000].forEach(function (ms) { setTimeout(settle, ms); }); watch(2500);
-      }, true);
-      document.addEventListener('touchend', function () { watch(800); }, { passive: true, capture: true });
-      document.addEventListener('visibilitychange', function () { if (!document.hidden) watch(1500); });
-      layout();
-      /* The engine never resumes its AudioContext, so mobile browsers keep it suspended (no sound).
-         Resume it inside real gestures, and open a "playback" audio session so the iOS silent switch doesn't mute it. */
-      var silent = null, sessionSet = false, tries = 0, done = false;
-      function unlock() {
-        if (done) {
-          /* already unlocked once: stay armed. If the system interrupted the audio since (share sheet, call, notification, lock screen),
-             take the next gesture to bring it back instead of staying silent for the rest of the session. */
-          var k0 = window.Klang && window.Klang.context;
-          if (k0 && k0.state === 'running' && silent && !silent.paused) return;
-          done = false; tries = 0;
-        }
-        try {
-          if (!sessionSet && navigator.audioSession) { navigator.audioSession.type = 'playback'; sessionSet = true; }
-          var K = window.Klang, c = K && K.context;
-          if (c && c.state !== 'running') {
-            c.resume();
-            var s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0);
-          }
-          if (!silent) {
-            /* 1 s of 8-bit silence (a zero-length looped clip would spin the media pipeline) */
-            var n = 8000, b = new Uint8Array(44 + n), dv = new DataView(b.buffer);
-            function w(o, s) { for (var i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i); }
-            w(0, 'RIFF'); dv.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
-            dv.setUint16(22, 1, true); dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true);
-            dv.setUint16(34, 8, true); w(36, 'data'); dv.setUint32(40, n, true); b.fill(128, 44);
-            silent = new Audio(URL.createObjectURL(new Blob([b], { type: 'audio/wav' })));
-            silent.loop = true; silent.setAttribute('playsinline', '');
-          }
-          if (silent.paused && tries < 12) {
-            tries++;
-            var pr = silent.play(); if (pr && pr.catch) pr.catch(function () {});
-          }
-          /* once everything is running, stop doing any work per event */
-          if (c && c.state === 'running' && !silent.paused) {
-            done = true;
-          }
-        } catch (e) {}
-      }
-      ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'click', 'keydown', 'input'].forEach(function (n) {
-        document.addEventListener(n, unlock, true);
-      });
-      document.addEventListener('visibilitychange', function () { if (!document.hidden) unlock(); });
-      window.__unlockAudio = unlock;
-      }
-      /* Controls: "+" shows/hides the tools dock, "i" shows/hides Info, the dock plays, runs Auto-Type or starts a new text */
-      var plus = document.getElementById('t-plus'), infoBtn = document.getElementById('t-info');
-      function setTools(on) {
-        root.classList.toggle('tools-open', on);
-        infoBtn.inert = !on;   /* out of the tab order and the accessibility tree while it is invisible */
-        if (!on && mode) { mode = null; paintSelection(); }
-        plus.setAttribute('aria-expanded', on ? 'true' : 'false');   /* one static name, the state is aria-expanded */
-      }
-      plus.addEventListener('click', function () {
-        var on = !root.classList.contains('tools-open');
-        if (!on && root.classList.contains('info-open') && window.__closeInfo) window.__closeInfo();   /* X always lands on the home screen, Info included */
-        setTools(on);
-      });
-      infoBtn.addEventListener('click', function () {
-        /* Info only opens from here: pressing it again does not send you back to the writing screen (X goes home, NEW starts a new text) */
-        if (!root.classList.contains('info-open') && window.__openInfo) window.__openInfo();
-      });
-      /* Colour tools. Fill = background, Text = text colour (both open the palette), Randomize = a readable random pair. */
-      var CU = window.__colorUtil, PAL = CU.PAL;
-      var cur = window.__colors || {}, mode = null;
-      var palette = document.getElementById('palette'), fillBtn = document.getElementById('t-fill'), textBtn = document.getElementById('t-text');
-      PAL.forEach(function (c) {
-        var b = document.createElement('button'); b.type = 'button';
-        b.setAttribute('aria-label', c || 'Default'); b.setAttribute('data-c', c || '');
-        if (c) { b.style.setProperty('--sw-c', c); b.style.setProperty('--dot', CU.lum(c) > .4 ? '#171A1C' : '#F9FAFA'); }
-        else { b.className = 'none'; b.style.setProperty('--dot', '#F9FAFA'); }
-        palette.appendChild(b);
-      });
-      function paintSelection() {
-        var sel = mode ? (cur[mode] || '') : null;
-        [].forEach.call(palette.children, function (b) { b.setAttribute('aria-pressed', sel !== null && b.getAttribute('data-c') === sel ? 'true' : 'false'); });
-        fillBtn.setAttribute('aria-pressed', mode === 'bg' ? 'true' : 'false'); textBtn.setAttribute('aria-pressed', mode === 'fg' ? 'true' : 'false');
-        root.classList.toggle('palette-open', !!mode);
-      }
-      function setColors(c) {
-        cur = { bg: c.bg || null, fg: c.fg || null }; window.__colors = cur; CU.apply(cur);
-        try { if (cur.bg || cur.fg) localStorage.setItem('clavier-colors', JSON.stringify(cur)); else localStorage.removeItem('clavier-colors'); localStorage.removeItem('clavier-theme'); } catch (e) {}
-        paintSelection();
-      }
-      function openMode(m) { mode = (mode === m) ? null : m; paintSelection(); }
-      fillBtn.addEventListener('click', function () { openMode('bg'); });
-      textBtn.addEventListener('click', function () { openMode('fg'); });
-      palette.addEventListener('click', function (e) {
-        var b = e.target.closest('button'); if (!b || !mode) return;
-        var n = { bg: cur.bg, fg: cur.fg }; n[mode] = b.getAttribute('data-c') || null;
-        /* free choice: background and text colour are picked independently, nothing is adjusted behind the user's back */
-        setColors(n);
-      });
-      document.getElementById('t-rand').addEventListener('click', function () {
-        setColors(CU.compose(cur));   /* bg + one foreground colour, harmonic and contrast-checked */
-      });
-      document.addEventListener('click', function (e) {   /* a click anywhere else puts the palette away */
-        if (mode && !e.target.closest('#palette, #t-fill, #t-text')) { mode = null; paintSelection(); }
-      }, true);
-      CU.apply(cur);
-      document.getElementById('t-play').addEventListener('click', function () { if (window.$nuxt) window.$nuxt.$emit('clavier-replay'); });
-      document.getElementById('t-auto').addEventListener('click', function () {
-        if (root.classList.contains('auto-on')) {   /* pressed again: stop and go back to the default (empty) state */
-          if (window.__autoStop) window.__autoStop();
-          if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
-        } else if (window.__autoType) window.__autoType();
-      });
-      document.getElementById('t-new').addEventListener('click', function () {
-        var wasInfo = root.classList.contains('info-open');
-        if (wasInfo && window.__closeInfo) window.__closeInfo();   /* NEW over Info: close it and get back to the writing screen */
-        if (window.__autoStop) window.__autoStop();
-        if (window.$nuxt) window.$nuxt.$emit('clavier-clear');
-        if (wasInfo) { var ta = document.querySelector('textarea'); if (ta) ta.focus({ preventScroll: true }); }
-      });
-      /* Share. Phones: renders the card as a 1080x1920 image and opens the native share sheet at once (no wait, no note).
-         Desktop (no native sharing): the link goes to the clipboard and a short text above the button confirms it. */
-      (function () {
-        var URL_ = 'https://playclavier.vercel.app', W = 1080, H = 1920, tt = 0;
-        var toastEl = document.getElementById('toast');
-        function toast(msg) {
-          if (root.classList.contains('is-mobile')) return;   /* phones: no text, the share sheet is the feedback */
-          var u = document.getElementById('ui').getBoundingClientRect(), r = document.getElementById('t-share').getBoundingClientRect();
-          toastEl.style.left = (r.left + r.width / 2 - u.left) + 'px'; toastEl.style.bottom = (u.bottom - r.top + 40) + 'px';
-          toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { toastEl.classList.remove('on'); }, 2200);
-        }
-        function wrap(ctx, text, max) {
-          var out = [];
-          text.split('\n').forEach(function (para) {
-            var line = '';
-            para.split(' ').forEach(function (w) {
-              var t = line ? line + ' ' + w : w;
-              if (line && ctx.measureText(t).width > max) { out.push(line); line = w; } else line = t;
-            });
-            out.push(line);
-          });
-          return out;
-        }
-        /* HSL lightness scaled by k (hue and saturation kept) */
-        function dim(c, k) {
-          var m = c.match(/\d+(\.\d+)?/g).slice(0, 3).map(function (v) { return v / 255; }), r = m[0], g = m[1], b = m[2];
-          var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, sa = 0, d = mx - mn;
-          if (d) {
-            sa = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
-            h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6;
-          }
-          return 'hsl(' + Math.round(h * 360) + ',' + Math.round(sa * 100) + '%,' + (l * k * 100).toFixed(2) + '%)';
-        }
-        /* the card (both the PNG and the clip frames). more = true appends an ellipsis (the clip hit its 10 s limit while you were still playing). tail = true: when the text is longer than the card, show its LAST lines (the way the field scrolls);
-           tail = false: the first lines, ending with an ellipsis. */
-        function drawCard(ctx, ta, tail, more) {
-          var bg = getComputedStyle(document.body).backgroundColor, fg = getComputedStyle(ta).color, face = getComputedStyle(ta).fontFamily || 'serif';
-          function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
-          ctx.fillStyle = dim(bg, .72); ctx.fillRect(0, 0, W, H);               /* canvas: lightness -28% */
-          var cw = Math.round(W * .88), k = cw / 842, ch = Math.round(cw * 5 / 4);   /* ONE card, 88% of the width, 4:5: no frame around it */
-          var x = Math.round((W - cw) / 2), y = Math.round((H - ch) / 2);
-          rr(x, y, cw, ch, 36 * k); ctx.fillStyle = bg; ctx.fill();         /* the exact page colour */
-          ctx.save(); rr(x, y, cw, ch, 36 * k); ctx.clip();
-          ctx.fillStyle = fg; ctx.textBaseline = 'top'; var fs = Math.round(44 * W / 390);   /* 44px on a 390-wide phone screen, scaled to the 1080-wide image */
-          ctx.font = '400 ' + fs + 'px ' + face;
-          var lh = Math.round(fs * 1.25), pad = Math.round(104 * k), lines = wrap(ctx, ta.value + (more ? '\u2026' : ''), cw - 2 * pad), fit = Math.floor((ch - 2 * pad) / lh);   /* more: an ellipsis after the text says the piece goes on */
-          if (lines.length > fit) {
-            if (tail) lines = lines.slice(lines.length - fit);
-            else {   /* from the top; when it does not fit, the last line ends with an ellipsis */
-              lines = lines.slice(0, fit); var last = lines[fit - 1].replace(/\s+$/, '');
-              while (last && ctx.measureText(last + '…').width > cw - 2 * pad) last = last.slice(0, -1).replace(/\s+$/, '');
-              if (last.length < lines[fit - 1].length && last.indexOf(' ') > 0) last = last.slice(0, last.lastIndexOf(' ')).replace(/[\s,.;:!?-]+$/, '');   /* cut at a whole word */
-              lines[fit - 1] = last + '…';
-            }
-          }
-          lines.forEach(function (l, i) { ctx.fillText(l, x + pad, y + pad + i * lh); });
-          ctx.restore();
-        }
-        /* the card as a PNG, drawn synchronously (the share sheet needs the tap that is still running) */
-        function card() {
-          var ta = document.querySelector('textarea'), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-          drawCard(cv.getContext('2d'), ta, false);
-          var b64 = cv.toDataURL('image/png').split(',')[1], bin = atob(b64), bytes = new Uint8Array(bin.length);
-          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-          cv.width = cv.height = 0;                                              /* release the canvas */
-          return new File([bytes], 'clavier.png', { type: 'image/png' });
-        }
-        /* ---- the first 10 seconds of a session, as a video with sound ----------------------------------------------------------------------------------------
-           A session starts with the first key and ends with NEW / an emptied field / leaving the page; each session has ONE clip. The recorder runs hidden, in
-           memory only (no disk, no storage, no network, no microphone: the sound comes from the engine itself). It records only while you play (it pauses after
-           3 s without a key) until it has 10 s, then stops by itself; if you are still playing at that moment the writing ends with "..." (the rest is in the product). Nothing leaves the device unless you tap Share. A new session throws the old clip away. */
-        var LIMIT = 10000, IDLE = 3000, clip = null;
-        function clipSupported() {
-          return root.classList.contains('is-mobile') && window.MediaRecorder && navigator.canShare && window.__tap && HTMLCanvasElement.prototype.captureStream;
-        }
-        function clipMime() {
-          var c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
-          for (var i = 0; i < c.length; i++) if (MediaRecorder.isTypeSupported(c[i])) return c[i];
-          return '';
-        }
-        function discardClip() {
-          var c = clip; if (!c) return; clip = null;
-          clearInterval(c.tick); cancelAnimationFrame(c.raf);
-          try { c.rec.ondataavailable = null; c.rec.onstop = null; c.rec.onerror = null; if (c.rec.state !== 'inactive') c.rec.stop(); } catch (e) {}
-          try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-          c.cv.width = c.cv.height = 0; c.chunks = []; if (c.cv.parentNode) c.cv.parentNode.removeChild(c.cv);
-        }
-        function pauseClip(c) { if (c.rec.state === 'recording') { c.ms += Date.now() - c.at; try { c.rec.pause(); } catch (e) {} } }
-        function resumeClip(c) { if (c.rec.state === 'paused') { c.at = Date.now(); try { c.rec.resume(); } catch (e) {} } }
-        function finishClip(c) {   /* stops the recorder; resolves with the File (or null) */
-          if (c.done) return c.done;
-          c.done = new Promise(function (res) {
-            c.rec.onstop = function () {
-              cancelAnimationFrame(c.raf);                                          /* c.tick keeps running: a finished clip must still be thrown away when the field is emptied */
-              try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-              c.cv.width = c.cv.height = 0; if (c.cv.parentNode) c.cv.parentNode.removeChild(c.cv);
-              var t = c.rec.mimeType || c.mime || 'video/mp4';
-              c.file = c.chunks.length ? new File(c.chunks, 'clavier.' + (/mp4/.test(t) ? 'mp4' : 'webm'), { type: t.split(';')[0] }) : null; c.chunks = [];
-              res(c.file);
-            };
-            try { if (c.rec.state === 'paused') c.rec.resume(); c.rec.stop(); } catch (e) { res(null); }
-          });
-          return c.done;
-        }
-        function startClip() {
-          var ta = document.querySelector('textarea'); if (!ta || !clipSupported()) return;
-          var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-          /* Safari/WebKit records a black picture from a canvas that is not in the page, so it is attached: 1px, nearly transparent, behind everything, no events */
-          cv.setAttribute('aria-hidden', 'true'); cv.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:-1';
-          document.body.appendChild(cv);
-          var ctx = cv.getContext('2d'), c = { cv: cv, drawn: 0, chunks: [], ms: 0, at: Date.now(), key: Date.now(), born: Date.now(), mime: clipMime(), file: null, done: null, shown: null };
-          /* repaints on every change AND at ~15 fps while recording (colour changes from the palette are picked up too, and the encoder always has frames) */
-          function paint(force) {
-            var v = ta.value + (c.more ? '\u2026' : ''), now = Date.now();
-            if (force || v !== c.shown || now - c.drawn > 66) {
-              c.shown = v; c.drawn = now; drawCard(ctx, ta, true, c.more);
-              var tr = c.vs && c.vs.getVideoTracks()[0]; if (tr && tr.requestFrame) { try { tr.requestFrame(); } catch (e) {} }
-            }
-          }
-          try {
-            paint(true);
-            c.vs = cv.captureStream(30);
-            window.__tap.stream.getAudioTracks().forEach(function (t) { c.vs.addTrack(t); });
-            c.rec = new MediaRecorder(c.vs, c.mime ? { mimeType: c.mime, videoBitsPerSecond: 4000000 } : {});
-            c.rec.ondataavailable = function (e) { if (e.data && e.data.size) c.chunks.push(e.data); };
-            c.rec.start(500);
-          } catch (e) { clip = c; discardClip(); return; }
-          clip = c;
-          (function frame() { if (clip !== c) return; paint(false); c.raf = requestAnimationFrame(frame); })();
-          c.tick = setInterval(function () {
-            var now = Date.now();
-            if (!ta.value && now - c.born > 1500) { discardClip(); return; }        /* the field was emptied (NEW, select-all + delete...): a new session */
-            if (c.done) return;
-            if (c.rec.state === 'recording') {
-              var played = c.ms + (now - c.at);
-              if (now - c.key > IDLE) { c.more = false; pauseClip(c); }
-              else if (played >= LIMIT) finishClip(c);
-              else if (played >= LIMIT - 800) c.more = true;                    /* still playing as the 10 s run out: the last frames end with "..." */
-            }
-          }, 200);
-        }
-        function touchClip() {   /* called on every key / input */
-          if (!clip) { startClip(); return; }
-          clip.key = Date.now(); if (!clip.done) resumeClip(clip);
-        }
-        window.addEventListener('keydown', function (e) { if (e.key && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey && !root.classList.contains('info-open')) touchClip(); }, true);
-        document.addEventListener('input', function (e) { if (e.target && e.target.tagName === 'TEXTAREA' && e.target.value) touchClip(); }, true);
-        document.addEventListener('visibilitychange', function () { if (document.hidden && clip && !clip.done) pauseClip(clip); });
-        window.addEventListener('pagehide', discardClip);
-        function copyLink() {
-          function ok() { toast('Link copied'); }
-          function old() {
-            var i = document.createElement('textarea'); i.value = URL_; i.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(i); i.select();
-            try { document.execCommand('copy'); ok(); } catch (e) {} i.remove();
-            var ta = document.querySelector('textarea'); if (ta) ta.focus({ preventScroll: true });
-          }
-          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL_).then(ok, old); else old();
-        }
-        function send(data) {
-          return navigator.share(data).catch(function (e) { if (!e || e.name !== 'AbortError') copyLink(); }).then(function () { if (window.__unlockAudio) window.__unlockAudio(); });   /* the sheet can interrupt the audio session: bring it back */
-        }
-        function sharePng() {
-          var data = { title: 'Clavier', text: 'Clavier: jam your solo', url: URL_ };
-          try { var f = card(), withFile = { files: [f], title: 'Clavier', text: URL_ }; if (navigator.canShare(withFile)) data = withFile; } catch (e) {}
-          return send(data);
-        }
-        document.getElementById('t-share').addEventListener('click', function () {
-          /* desktop (and anything that is not a phone): always the link on the clipboard, never a native sheet without the image */
-          if (!navigator.share || !(root.classList.contains('is-mobile') && navigator.canShare)) { copyLink(); return; }
-          var c = clip;
-          if (!c) { sharePng(); return; }                                        /* nothing played yet in this session: the static card, as before */
-          var ready = c.file ? Promise.resolve(c.file) : Promise.race([finishClip(c), new Promise(function (r) { setTimeout(function () { r(null); }, 1500); })]);
-          ready.then(function (f) {
-            var data = f && { files: [f], title: 'Clavier', text: URL_ };
-            if (data && navigator.canShare(data)) send(data); else sharePng();   /* no clip, or this browser cannot share it: the card */
-          }).catch(sharePng);
-        });
-      })();
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setTools(false); });
-      /* keep the keyboard up: buttons never steal focus from the text field */
-      function keepFocus(e) { if (e.target.closest('#ui button')) e.preventDefault(); }
-      document.addEventListener('mousedown', keepFocus);
-      document.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') keepFocus(e); });
-      /* Virtual keyboards often report key "Unidentified"/229 on keydown: replay those as a real keydown
-         from the inserted text so every tap fires the next piano step. */
-      var engRef = null;
-      function pianoEngineRef() {
-        if (engRef) return engRef;
-        (function walk(vm) {
-          if (engRef || !vm) return;
-          if (vm.pianoEngine) { engRef = vm.pianoEngine; return; }
-          (vm.$children || []).forEach(walk);
-        })(window.$nuxt);
-        return engRef;
-      }
-      if (mobile) {
-      var lastGood = 0;
-      document.addEventListener('keydown', function (e) {
-        if (e.key && e.key !== 'Unidentified' && e.keyCode !== 229) lastGood = Date.now(); /* includes Auto-Type's own keydowns */
-      }, true);
-      document.addEventListener('input', function (e) {
-        var t = e.target; if (!t || t.tagName !== 'TEXTAREA' || !e.isTrusted) return;
-        if (Date.now() - lastGood < 120) return;
-        var key = e.inputType === 'insertText' && e.data && e.data.length === 1 ? e.data
-          : e.inputType === 'deleteContentBackward' ? 'Backspace' : null;
-        if (!key) return;
-        /* A typed character: the browser already wrote it, so only ask the engine for the note (it records the
-           key for Play, but never touches the text, which is what used to give "Hlo" instead of "Hello"). */
-        if (key !== 'Backspace') {
-          var eg = pianoEngineRef();
-          if (eg) { try { eg.soundOnly(key, key.toUpperCase().charCodeAt(0)); return; } catch (err) {} }
-        }
-        /* Backspace (or no engine yet): replay the key and restore the native text. */
-        var v = t.value, a = t.selectionStart, z = t.selectionEnd;
-        t.dispatchEvent(new KeyboardEvent('keydown', { key: key, bubbles: true, cancelable: true }));
-        setTimeout(function () {
-          if (t.value === v) return;
-          t.value = v; try { t.setSelectionRange(a, z); } catch (_) {}
-          t.dispatchEvent(new Event('input', { bubbles: true }));
-        }, 60);
-      }, true);
-      }
-    })();
-  </script>
-  <script>
-    /* The text field and the Info page reserve exactly the space the controls take. #stack is measured, never estimated:
-       --stack-h   = height of what is on screen now (corner buttons; + the dock when the tools are open; + the palette when it is open)
-       --stack-max = height with the dock open (the Info page uses it, so its text never moves when the tools open or close). */
-    (function () {
-      var root = document.documentElement, ui = document.getElementById('ui'), stack = document.getElementById('stack');
-      if (!ui || !stack) return;
-      var plus = document.getElementById('t-plus'), dock = document.getElementById('dock'), pal = document.getElementById('palette'), last = {};
-      function put(name, px) { var v = Math.round(px * 100) / 100 + 'px'; if (last[name] !== v) { last[name] = v; root.style.setProperty(name, v); } }
-      function measure() {
-        var bottom = ui.getBoundingClientRect().bottom, c = root.classList;
-        var tPlus = plus.getBoundingClientRect().top, tDock = dock.getBoundingClientRect().top, tPal = pal.getBoundingClientRect().top;
-        var max = bottom - Math.min(tPlus, tDock), h = bottom - tPlus;
-        if (c.contains('tools-open')) { h = max; if (c.contains('palette-open')) h = Math.max(h, bottom - tPal); }
-        put('--stack-max', max); put('--stack-h', h);
-      }
-      if (window.ResizeObserver) { var ro = new ResizeObserver(measure); [stack, dock, pal, plus].forEach(function (e) { ro.observe(e); }); }
-      new MutationObserver(measure).observe(root, { attributes: true, attributeFilter: ['class'] });
-      window.addEventListener('resize', measure);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
-      measure();
-    })();
-  </script>
+  <script type="module" src="/js/main-v1.js"></script>
 </body>
 </html>

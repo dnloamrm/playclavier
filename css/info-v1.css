@@ -1,0 +1,31 @@
+/* The Info page: a glass layer over the app, one text block centred on the grid. */
+/* Info view: same document, crossfaded in over the app (no reload, audio and typed text survive).
+   Glass background (translucent + blur), text block centred in the interface over 4 grid columns, left aligned. */
+#info-view {
+  position: fixed; inset: 0; z-index: 90;
+  background-color: var(--c-glass); background-color: color-mix(in srgb, var(--c-bg) 55%, transparent); color: var(--c-fg);   /* the 2nd declaration wins where color-mix() exists */
+  -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
+  padding: calc(var(--stack-max) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
+  display: flex; flex-direction: column;
+  font-family: "Arizona Sans", sans-serif; font-weight: 400;
+  opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
+  height: 100vh; height: 100dvh;
+  overflow: hidden; outline: none;   /* the text scrolls inside .info-in, which stops above the buttons: that band stays clear */
+}
+#info-view::-webkit-scrollbar { display: none; }
+#info-view .info-in { margin: 0; width: 100%; text-align: left; display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
+#info-view .info-in::-webkit-scrollbar { display: none; }
+/* Info type: Arizona Sans, 28px / 35px, on desktop and phones */
+#info-view p { font-family: "Arizona Sans", sans-serif; font-size: 28px; font-weight: 400; line-height: 35px; letter-spacing: 0; margin: 0 0 35px; color: var(--c-fg); }
+#info-view p:last-child { margin-bottom: 0; }
+/* the text block is centred on the screen and spans 4 columns of the grid (desktop: columns 5 to 8 of 12; phones: the 4 columns are the full width) */
+#info-view .info-in > p { width: 100%; }
+#info-view .info-in > p:first-child { margin-top: auto; }
+#info-view .info-in > p:last-child { margin-bottom: auto; }   /* auto margins centre the block vertically and fall back to the top when it is taller than the area */
+html.is-wide:not(.is-mobile) #info-view .info-in > p { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
+.info-open #info-view { opacity: 1; visibility: visible; }
+/* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
+html.info-open textarea { caret-color: transparent; }
+.is-mobile #info-view {
+  padding: calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
+}

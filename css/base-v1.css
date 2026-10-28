@@ -1,0 +1,14 @@
+/* Typefaces (ABC Arizona Text / Sans: Dinamo trial files, preloaded from <head>) and Material Symbols Sharp (self-hosted subset), plus the small utilities. */
+@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-RegularItalic.otf) format("opentype");font-weight:400;font-style:italic;font-display:block}
+@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-Bold.otf) format("opentype");font-weight:700;font-style:normal;font-display:block}
+@font-face{font-family:"Arizona Text";src:url(/fonts/arizona/ABCArizonaTextTrial-BoldItalic.otf) format("opentype");font-weight:700;font-style:italic;font-display:block}
+@font-face{font-family:"Arizona Sans";src:url(/fonts/arizona-sans/ABCArizonaSansTrial-Regular.otf) format("opentype");font-weight:400;font-style:normal;font-display:block}
+
+@font-face { font-family: "Material Symbols Sharp"; font-style: normal; font-weight: 100 700; font-display: block; src: url(/fonts/material-symbols/MaterialSymbolsSharp-Fill-v4.woff2) format("woff2"); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }   /* visually hidden, still read by screen readers */
+
+/* colour changes are instant, and the text field has no box of its own (it shows the page colour) */
+html body, html #__nuxt { transition: none; }
+html textarea { background-color: transparent; transition: none; }
