@@ -819,7 +819,7 @@
           if (c.done) return c.done;
           c.done = new Promise(function (res) {
             c.rec.onstop = function () {
-              clearInterval(c.tick); cancelAnimationFrame(c.raf);
+              cancelAnimationFrame(c.raf);                                          /* c.tick keeps running: a finished clip must still be thrown away when the field is emptied */
               try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
               c.cv.width = c.cv.height = 0; if (c.cv.parentNode) c.cv.parentNode.removeChild(c.cv);
               var t = c.rec.mimeType || c.mime || 'video/mp4';
@@ -858,6 +858,7 @@
           c.tick = setInterval(function () {
             var now = Date.now();
             if (!ta.value && now - c.born > 1500) { discardClip(); return; }        /* the field was emptied (NEW, select-all + delete...): a new session */
+            if (c.done) return;
             if (c.rec.state === 'recording') {
               var played = c.ms + (now - c.at);
               if (now - c.key > IDLE) { c.more = false; pauseClip(c); }
