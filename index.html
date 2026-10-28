@@ -207,7 +207,8 @@
     <style>
       /* Controls: a "+" button bottom-left (opens/closes the tools dock), an "i" button bottom-right (Info) and a central
          dock (PLAY / AUTO-JAM / NEW). Square buttons, 6px corners, thin border; 40px from the grid margins (20px on mobile). */
-      html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; --block-gap: 24px; --clear: 32px; }
+      html { --btn: 60px; --edge: 40px; --dock-b: 40px; --gap: 12px; --block-gap: 24px; --clear: 32px;
+        --stack-h: calc(var(--dock-b) + var(--btn) + var(--sab, 0px)); --stack-max: var(--stack-h); }   /* --stack-h / --stack-max are MEASURED from #stack (script at the end of the body); these are the first-paint values */
       html.is-mobile { --btn: 46px; --edge: 20px; --dock-b: 20px; --block-gap: 12px; --gap: var(--block-gap); --clear: 16px; }   /* phones: tight, every distance between button rows is the same 12px, and the text stops 16px above the buttons */
       #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
       /* phones: the layer follows the VISUAL viewport (set live from JS): same height, same offset, GPU-translated */
@@ -310,7 +311,7 @@
       textarea {
         --m: 40px;
         --ml: 140px;
-        --lim: calc(var(--dock-b) + var(--btn) + 32px);   /* the text never runs closer than 32px to the buttons: it scrolls instead */
+        --lim: calc(var(--stack-h) + var(--clear));   /* the text never runs closer than --clear to the controls (whatever is open, palette included): it scrolls instead */
         margin: var(--m) var(--m) var(--lim) var(--ml) !important;
         padding: 0 !important;
         width: calc(100% - var(--ml) - var(--m)) !important;
@@ -335,7 +336,7 @@
         position: fixed; inset: 0; z-index: 90;
         background-color: color-mix(in srgb, var(--c-bg, #0B0D0E) 55%, transparent); color: var(--c-fg, #F9FAFA);
         -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);   /* glass */
-        padding: calc(var(--dock-b) + var(--btn) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
+        padding: calc(var(--stack-max) + var(--clear)) 40px; box-sizing: border-box;   /* the same clear band above and below: the text sits at the true centre of the interface and never under the buttons */
         display: flex; flex-direction: column;
         font-family: "Arizona Sans", sans-serif; font-weight: 400;
         opacity: 0; visibility: hidden;   /* no transition: the Info page appears and disappears at once */
@@ -365,15 +366,13 @@
       .is-mobile textarea {
         --mx: var(--edge);
         --mt: max(clamp(28px, 7vw, 56px), env(safe-area-inset-top, 0px) + 16px);
-        --mb: calc(var(--dock-b) + var(--btn) + var(--clear) + var(--sab, 0px));
+        --mb: calc(var(--stack-h) + var(--clear));
         margin: var(--mt) max(var(--mx), env(safe-area-inset-right, 0px)) 0 max(var(--mx), env(safe-area-inset-left, 0px)) !important;
         padding: 0 !important;   /* like desktop: the field ENDS above the buttons (a clear bottom band), the text scrolls inside it */
         width: calc(100% - max(var(--mx), env(safe-area-inset-left, 0px)) - max(var(--mx), env(safe-area-inset-right, 0px))) !important;
         height: calc(var(--vvh, 100dvh) - var(--mt) - var(--mb)) !important;
         font-size: 40px !important; line-height: 1.25 !important;
       }
-      /* mobile: the open dock sits in a row above the corner buttons, so the limit moves up with it */
-      .is-mobile.tools-open textarea { --mb: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)); }
       /* phones: the root is locked to the screen (no rubber-band scrolling in iOS Safari) */
       html.is-mobile, html.is-mobile body { position: fixed; inset: 0; width: 100%; height: 100dvh; overflow: hidden; }
       .is-mobile .main-wrapper .main {
@@ -381,7 +380,7 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
+        padding: calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
       }
     </style>
   </head>
@@ -841,6 +840,29 @@
         }, 60);
       }, true);
       }
+    })();
+  </script>
+  <script>
+    /* The text field and the Info page reserve exactly the space the controls take. #stack is measured, never estimated:
+       --stack-h   = height of what is on screen now (corner buttons; + the dock when the tools are open; + the palette when it is open)
+       --stack-max = height with the dock open (the Info page uses it, so its text never moves when the tools open or close). */
+    (function () {
+      var root = document.documentElement, ui = document.getElementById('ui'), stack = document.getElementById('stack');
+      if (!ui || !stack) return;
+      var plus = document.getElementById('t-plus'), dock = document.getElementById('dock'), pal = document.getElementById('palette'), last = {};
+      function put(name, px) { var v = Math.round(px * 100) / 100 + 'px'; if (last[name] !== v) { last[name] = v; root.style.setProperty(name, v); } }
+      function measure() {
+        var bottom = ui.getBoundingClientRect().bottom, c = root.classList;
+        var tPlus = plus.getBoundingClientRect().top, tDock = dock.getBoundingClientRect().top, tPal = pal.getBoundingClientRect().top;
+        var max = bottom - Math.min(tPlus, tDock), h = bottom - tPlus;
+        if (c.contains('tools-open')) { h = max; if (c.contains('palette-open')) h = Math.max(h, bottom - tPal); }
+        put('--stack-max', max); put('--stack-h', h);
+      }
+      if (window.ResizeObserver) { var ro = new ResizeObserver(measure); [stack, dock, pal, plus].forEach(function (e) { ro.observe(e); }); }
+      new MutationObserver(measure).observe(root, { attributes: true, attributeFilter: ['class'] });
+      window.addEventListener('resize', measure);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+      measure();
     })();
   </script>
 </body>
