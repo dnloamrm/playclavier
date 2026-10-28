@@ -811,7 +811,7 @@
           clearInterval(c.tick); cancelAnimationFrame(c.raf);
           try { c.rec.ondataavailable = null; c.rec.onstop = null; c.rec.onerror = null; if (c.rec.state !== 'inactive') c.rec.stop(); } catch (e) {}
           try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-          c.cv.width = c.cv.height = 0; c.chunks = [];
+          c.cv.width = c.cv.height = 0; c.chunks = []; if (c.cv.parentNode) c.cv.parentNode.removeChild(c.cv);
         }
         function pauseClip(c) { if (c.rec.state === 'recording') { c.ms += Date.now() - c.at; try { c.rec.pause(); } catch (e) {} } }
         function resumeClip(c) { if (c.rec.state === 'paused') { c.at = Date.now(); try { c.rec.resume(); } catch (e) {} } }
@@ -821,7 +821,7 @@
             c.rec.onstop = function () {
               clearInterval(c.tick); cancelAnimationFrame(c.raf);
               try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-              c.cv.width = c.cv.height = 0;
+              c.cv.width = c.cv.height = 0; if (c.cv.parentNode) c.cv.parentNode.removeChild(c.cv);
               var t = c.rec.mimeType || c.mime || 'video/mp4';
               c.file = c.chunks.length ? new File(c.chunks, 'clavier.' + (/mp4/.test(t) ? 'mp4' : 'webm'), { type: t.split(';')[0] }) : null; c.chunks = [];
               res(c.file);
@@ -833,8 +833,18 @@
         function startClip() {
           var ta = document.querySelector('textarea'); if (!ta || !clipSupported()) return;
           var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-          var ctx = cv.getContext('2d'), c = { cv: cv, chunks: [], ms: 0, at: Date.now(), key: Date.now(), born: Date.now(), mime: clipMime(), file: null, done: null, shown: null };
-          function paint(force) { var v = ta.value + (c.more ? '\u2026' : ''); if (force || v !== c.shown) { c.shown = v; drawCard(ctx, ta, true, c.more); } }
+          /* Safari/WebKit records a black picture from a canvas that is not in the page, so it is attached: 1px, nearly transparent, behind everything, no events */
+          cv.setAttribute('aria-hidden', 'true'); cv.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:-1';
+          document.body.appendChild(cv);
+          var ctx = cv.getContext('2d'), c = { cv: cv, drawn: 0, chunks: [], ms: 0, at: Date.now(), key: Date.now(), born: Date.now(), mime: clipMime(), file: null, done: null, shown: null };
+          /* repaints on every change AND at ~15 fps while recording (colour changes from the palette are picked up too, and the encoder always has frames) */
+          function paint(force) {
+            var v = ta.value + (c.more ? '\u2026' : ''), now = Date.now();
+            if (force || v !== c.shown || now - c.drawn > 66) {
+              c.shown = v; c.drawn = now; drawCard(ctx, ta, true, c.more);
+              var tr = c.vs && c.vs.getVideoTracks()[0]; if (tr && tr.requestFrame) { try { tr.requestFrame(); } catch (e) {} }
+            }
+          }
           try {
             paint(true);
             c.vs = cv.captureStream(30);
