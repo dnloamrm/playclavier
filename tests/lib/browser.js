@@ -19,7 +19,7 @@ async function launch() {
  *                  'none'  = no Web Share API at all
  */
 async function open(browser, url, opts = {}) {
-  const { width = 1440, height = 900, mobile = false, fakeViewport = false, shareSpy = 'none', colors = null, scale = 1, spyConnect = false } = opts;
+  const { width = 1440, height = 900, mobile = false, fakeViewport = false, shareSpy = 'none', colors = null, scale = 1, spyConnect = false, downloadSpy = false } = opts;
   // every page gets its own browser context (own localStorage, cookies, permissions): no test can leak state into another
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
@@ -47,6 +47,11 @@ async function open(browser, url, opts = {}) {
       window.__vv = f;
     }
     if (o.colors) localStorage.setItem('clavier-colors', JSON.stringify(o.colors));
+    if (o.downloadSpy) {   // records a download started with <a download>.click() instead of saving a file
+      window.__downloads = [];
+      const click = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function () { if (this.download) { window.__downloads.push({ name: this.download, href: this.href }); return; } return click.apply(this, arguments); };
+    }
     if (o.spyConnect) {   // records every connection made in the audio graph (installed before the app's own connect() patch, which wraps it)
       window.__conn = [];
       const base = AudioNode.prototype.connect;
@@ -61,7 +66,7 @@ async function open(browser, url, opts = {}) {
         return base.apply(this, arguments);
       };
     }
-  }, { shareSpy, fakeViewport, colors, spyConnect });
+  }, { shareSpy, fakeViewport, colors, spyConnect, downloadSpy });
   await page.goto(url + (url.includes('?') ? '&' : '/?') + 'cb=' + Date.now(), { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.$nuxt && window.$nuxt.$store.state.isLoading === false, { timeout: 200000 });
   await sleep(1200);

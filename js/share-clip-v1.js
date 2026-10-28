@@ -1,4 +1,4 @@
-/* The first 10 seconds of a session, as a video with sound (phones).
+/* The first 10 seconds of a session, as a video with sound (phones and desktops).
 
    A session starts with the first key and ends with NEW, an emptied field or leaving the page; each session has ONE clip. The recorder runs hidden,
    in memory only: no disk, no storage, no network, no microphone (the sound is the engine's own output, Clavier.audioTap). It records only while you
@@ -12,13 +12,12 @@
      finishClip()  limit reached, or Share tapped before it: stops the recorder, resolves with the File
      discardClip() field emptied (NEW), page left, or an error                                                                              */
 import { root, field } from './dom-v1.js';
-import { isMobile } from './dom-v1.js';
 import { drawCard, W, H } from './share-card-v1.js';
 
 const LIMIT = 10000, IDLE = 3000;
 let clip = null;
 
-const supported = () => isMobile() && window.MediaRecorder && navigator.canShare && window.Clavier.audioTap && HTMLCanvasElement.prototype.captureStream;
+const supported = () => window.MediaRecorder && window.Clavier.audioTap && HTMLCanvasElement.prototype.captureStream;   /* every device: phones share it, desktops share or download it */
 
 function pickMime() {
   const c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];

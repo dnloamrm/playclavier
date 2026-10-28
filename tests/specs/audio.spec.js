@@ -53,3 +53,13 @@ test('audio: no page errors while typing, pressing PLAY and AUTO-JAM', async ({ 
     assert(page.errors.length === 0, 'page errors: ' + page.errors.join(' | '));
   } finally { await page.close(); }
 }, { tags: ['audio'] });
+
+test('audio: the tap exists on desktop too (the share clip needs it) and no phone chain is inserted', async ({ open }) => {
+  const page = await open({ spyConnect: true });
+  try {
+    await typeInto(page, 'abcdef');
+    assert(await page.evaluate(() => !!window.Clavier.audioTap), 'no audio tap on desktop');
+    const log = await page.evaluate(() => window.__conn);
+    assert(!log.some((c) => c.from === 'GainNode' && Math.abs(c.d.gain - Math.pow(10, -4 / 20)) < 0.001 && c.to === 'AudioDestinationNode'), 'the phone master gain is on the desktop path');
+  } finally { await page.close(); }
+}, { tags: ['audio'] });

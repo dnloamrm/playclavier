@@ -1,19 +1,20 @@
-/* Audio patches that must exist BEFORE the engine builds its graph, so this is a classic script in <head> (not a module), and it must not move.
+/* Audio graph patches. They must exist BEFORE the engine builds its graph, so this is a classic script in <head> (not a module), and it must not move.
 
-   WARNING: both patches below modify global browser prototypes (HTMLMediaElement.prototype.canPlayType and AudioNode.prototype.connect).
+   WARNING: the patches below modify global browser prototypes (HTMLMediaElement.prototype.canPlayType and AudioNode.prototype.connect).
    They are the only global patches in the project; tests/specs/audio.spec.js watches the graph they build.
 
    1. Safari: pretend it cannot play Ogg / Opus / Vorbis, so the engine picks the MP3 samples (Safari's Ogg support is partial).
-   2. Phones: every sound goes through a master chain  low-pass 3800 Hz -> compressor -> gain -4 dB -> speakers  (phone speakers distort easily).
-      The signal that finally reaches the speakers is also copied into an in-memory MediaStream, exposed as Clavier.audioTap: the Share clip
-      (js/share-clip-v1.js) reads it during the first 10 s of a session. Nothing is recorded by the tap alone. */
+   2. The tap (every device): whatever finally reaches the speakers is also copied into an in-memory MediaStream, exposed as Clavier.audioTap.
+      The Share clip (js/share-clip-v1.js) reads it during the first 10 s of a session; nothing is recorded by the tap alone.
+   3. The master chain (phones only): every sound goes through  low-pass 3800 Hz -> compressor -> gain -4 dB -> speakers  (phone speakers distort
+      easily). It wraps the tap, so the tap receives the chain's OUTPUT. */
 (function () {
   'use strict';
   var ua = navigator.userAgent || '';
   var safari = /iPad|iPhone|iPod/.test(ua) || (/^((?!chrome|android|crios|fxios).)*safari/i.test(ua));
   if (safari) { var canPlay = HTMLMediaElement.prototype.canPlayType; HTMLMediaElement.prototype.canPlayType = function (t) { return /ogg|opus|vorbis/i.test(t) ? '' : canPlay.call(this, t); }; }
 
-  if (!window.Clavier || !window.Clavier.device.phone) return;
+  if (!window.Clavier) return;
 
   /* the tap: wraps connect() first, so the chain below (which wraps this) delivers its OUTPUT here */
   var taps = new WeakMap(), base = AudioNode.prototype.connect, tapNode = null;
@@ -29,7 +30,8 @@
     return base.apply(this, arguments);
   };
 
-  /* the master chain */
+  /* the master chain: phones only */
+  if (!window.Clavier.device.phone) return;
   var chains = new WeakMap(), rawConnect = AudioNode.prototype.connect;
   AudioNode.prototype.connect = function (dest) {
     if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {

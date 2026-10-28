@@ -1,5 +1,7 @@
-/* Share. Phones: the sheet opens at once with the clip of the first 10 s (video + sound) when there is one, otherwise with the card as a PNG.
-   Desktop, and anything that is not a phone: the link goes to the clipboard and a short text above the button says so. No native sheet on desktop. */
+/* Share.
+   Phones: the native sheet opens at once with the clip of the first 10 s (video + sound) when there is one, otherwise with the card as a PNG.
+   Desktop: with a clip, the native sheet where the browser has one for files (Safari / Chrome on macOS, Chrome / Edge on Windows: AirDrop, Messages,
+   Mail...), otherwise the video is downloaded ("Video saved", and the link goes to the clipboard). Nothing played yet: the link goes to the clipboard. */
 import { byId, isMobile, field } from './dom-v1.js';
 import { cardPng } from './share-card-v1.js';
 import { currentClip, finishClip, initClip } from './share-clip-v1.js';
@@ -35,16 +37,33 @@ function sharePng() {
   return send(data);
 }
 
+function download(file) {
+  const u = URL.createObjectURL(file), a = document.createElement('a');
+  a.href = u; a.download = file.name; a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 10000);
+  const ta = field(); if (ta) ta.focus({ preventScroll: true });
+}
+
+/* desktop: the clip goes to the native sheet when the browser can share that file, otherwise it is downloaded */
+function shareClipOnDesktop(file) {
+  const data = { files: [file], title: 'Clavier', text: URL_ };
+  if (navigator.share && navigator.canShare && navigator.canShare(data)) { send(data); return; }
+  download(file);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL_).catch(() => {});
+  toast('Video saved');
+}
+
 function onShare() {
-  /* desktop (and anything that is not a phone): always the link on the clipboard, never a native sheet without the image */
-  if (!navigator.share || !(isMobile() && navigator.canShare)) { copyLink(); return; }
+  const phone = isMobile() && navigator.share && navigator.canShare;
   const c = currentClip();
-  if (!c) { sharePng(); return; }                                            /* nothing played yet in this session: the static card */
+  if (!c) { if (phone) sharePng(); else copyLink(); return; }                /* nothing played yet in this session: the card on phones, the link on desktop */
   const ready = c.file ? Promise.resolve(c.file) : Promise.race([finishClip(c), new Promise((r) => setTimeout(() => r(null), 1500))]);
   ready.then((f) => {
-    const data = f && { files: [f], title: 'Clavier', text: URL_ };
-    if (data && navigator.canShare(data)) send(data); else sharePng();       /* no clip, or this browser cannot share it: the card */
-  }).catch(sharePng);
+    if (!f) { if (phone) sharePng(); else copyLink(); return; }
+    if (!phone) { shareClipOnDesktop(f); return; }
+    const data = { files: [f], title: 'Clavier', text: URL_ };
+    if (navigator.canShare(data)) send(data); else sharePng();               /* this browser cannot share the clip: the card */
+  }).catch(() => (phone ? sharePng() : copyLink()));
 }
 
 export function initShare() { initClip(); byId('t-share').addEventListener('click', onShare); }

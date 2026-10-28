@@ -2,7 +2,7 @@
 
    Load order (index.html):
      <head>   css/tokens (render-blocking)  ->  js/colors-v1.js (classic)  ->  the bootstrap script (device, breakpoints, theme: before the first paint)
-              ->  js/mobile-audio-chain-v1.js (classic: patches the audio graph BEFORE the engine builds it)
+              ->  js/audio-graph-v1.js (classic: patches the audio graph BEFORE the engine builds it)
      <body>   the app bundle loader (classic)   ->   this module (deferred)
 
    window.Clavier is the only global: a read-only namespace for debugging and tests, sealed here once everything is wired. */

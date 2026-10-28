@@ -73,3 +73,37 @@ test('share (desktop where navigator.share exists, e.g. Safari/macOS, Edge): cop
     assert(await page.evaluate(() => window.__copied) === LINK, 'link was not copied');
   } finally { await page.close(); }
 }, { tags: ['share'] });
+
+const playOnDesktop = async (page) => { await typeInto(page, 'hello world', 110); await openTools(page); };
+
+test('share (desktop, after playing, browser WITH native file sharing): the sheet receives the video clip, nothing is downloaded', async ({ open }) => {
+  const page = await open({ shareSpy: 'files', downloadSpy: true });
+  try {
+    await playOnDesktop(page);
+    await page.evaluate(() => { window.__shared = null; document.getElementById('t-share').click(); }); await sleep(1800);
+    const r = await page.evaluate(() => ({ f: window.__shared && window.__shared.files && window.__shared.files[0] ? { type: window.__shared.files[0].type, size: window.__shared.files[0].size } : null, text: window.__shared && window.__shared.text, dl: window.__downloads.length }));
+    assert(r.f && /^video\//.test(r.f.type) && r.f.size > 10000, 'the sheet did not receive a video: ' + JSON.stringify(r)); assert(r.text === LINK, 'the link is not in the text'); assert(r.dl === 0, 'a file was downloaded as well');
+  } finally { await page.close(); }
+}, { tags: ['share'] });
+
+test('share (desktop, after playing, browser WITHOUT native file sharing): the video is downloaded, "Video saved" appears above the button and the link is copied', async ({ open }) => {
+  const page = await open({ shareSpy: 'none', downloadSpy: true });
+  try {
+    await playOnDesktop(page);
+    await page.evaluate(() => { document.getElementById('t-share').click(); }); await sleep(1800);
+    const r = await page.evaluate(() => { const t = document.getElementById('toast'), s = document.getElementById('t-share').getBoundingClientRect(), r = t.getBoundingClientRect(); return { dl: window.__downloads, text: t.textContent, shown: getComputedStyle(t).display !== 'none', above: s.top - r.bottom, copied: window.__copied }; });
+    assert(r.dl.length === 1 && /^clavier\.(mp4|webm)$/.test(r.dl[0].name) && r.dl[0].href.startsWith('blob:'), 'download: ' + JSON.stringify(r.dl));
+    assert(r.text === 'Video saved' && r.shown, 'note: ' + r.text); assert.near(r.above, 40, 1, 'note distance above the button'); assert(r.copied === LINK, 'the link was not copied');
+    assert(page.errors.length === 0, 'page errors: ' + page.errors.join(' | '));
+  } finally { await page.close(); }
+}, { tags: ['share'] });
+
+test('share (desktop): NEW throws the clip away, so the next share is just the link again', async ({ open }) => {
+  const page = await open({ shareSpy: 'none', downloadSpy: true });
+  try {
+    await playOnDesktop(page); await click(page, 't-new'); await sleep(2300);
+    await page.evaluate(() => { window.__copied = null; document.getElementById('t-share').click(); }); await sleep(600);
+    const r = await page.evaluate(() => ({ dl: window.__downloads.length, copied: window.__copied, text: document.getElementById('toast').textContent }));
+    assert(r.dl === 0, 'a stale clip was downloaded'); assert(r.copied === LINK && r.text === 'Link copied', JSON.stringify(r));
+  } finally { await page.close(); }
+}, { tags: ['share'] });
