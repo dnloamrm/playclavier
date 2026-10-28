@@ -92,7 +92,7 @@
   /* only palette colours are accepted: anything else (a hand-edited value, a colour from an old version) falls back to the default one */
   function validate(c) {
     if (!c || typeof c !== 'object') return null;
-    var ok = function (v) { return typeof v === 'string' && PAL.indexOf(v.toUpperCase()) > 0; };   /* index 0 is white; null (the default swatch) is skipped by typeof */
+    var ok = function (v) { return typeof v === 'string' && PAL.indexOf(v.toUpperCase()) > -1; };   /* PAL also holds null (the default swatch), which typeof rules out */
     var out = { bg: ok(c.bg) ? c.bg.toUpperCase() : null, fg: ok(c.fg) ? c.fg.toUpperCase() : null };
     return out.bg || out.fg ? out : null;
   }
