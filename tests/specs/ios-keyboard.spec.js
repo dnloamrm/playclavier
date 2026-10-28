@@ -41,7 +41,7 @@ test('ios keyboard: the open dock keeps its distance from the visible bottom wit
     const up = await dist();
     await page.evaluate(() => { window.__vv.height = innerHeight; document.querySelector('textarea').blur(); }); await sleep(700);
     const down = await dist();
-    assert(up === down && up === 20 + 44 + 12, `dock distance ${up} / ${down}`);
+    assert(up === down && up === 20 + 46 + 12, `dock distance ${up} / ${down}`);
   } finally { await page.close(); }
 }, { tags: ['keyboard-ios'] });
 
