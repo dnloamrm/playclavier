@@ -64,9 +64,10 @@
        bg   page background
        fg   ONE colour for the typography, the borders, the icons and the labels
        ph   the placeholder, derived from bg: 100% black or white with a 35% overlay
-     Randomize picks one of the 100 pairs above (never the same pair twice in a row, never the same background twice in a row). */
+     Randomize picks one of the 100 pairs above, never the same background twice in a row (the default theme counts as #0B0D0E). */
   function compose(prev) {
-    var pool = PAIRS.filter(function (p) { return !prev || (p[0] !== prev.bg && !(p[0] === prev.bg && p[1] === prev.fg)); });
+    var prevBg = prev ? (prev.bg || D.bg) : null;   /* the default theme has no bg stored (null): compare with what is actually on screen */
+    var pool = PAIRS.filter(function (p) { return !prevBg || p[0] !== prevBg; });
     var p = pool[Math.floor(Math.random() * pool.length)];
     return { bg: p[0], fg: p[1] };
   }
