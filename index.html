@@ -218,6 +218,9 @@
         cursor: pointer; -webkit-appearance: none; appearance: none; box-shadow: none; outline: none;
         -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: none !important;
       }
+      /* keyboard focus only: a ring shows for Tab / arrow navigation, never after a click or a tap (:focus-visible) */
+      #ui button:focus-visible { outline: 1px solid var(--c-fg, #F9FAFA); outline-offset: 2px; border-radius: 6px; }
+      #ui #palette button:focus-visible { outline-offset: -3px; border-radius: 0; }   /* swatches sit flush inside a clipped box: the ring goes inside */
       #ui .corner {
         position: absolute; bottom: calc(var(--dock-b) + var(--sab, 0px));
         width: var(--btn); height: var(--btn); padding: 0; border: 1px solid var(--c-fg, #F9FAFA); border-radius: 6px;
@@ -423,6 +426,9 @@
       grab();
       window.addEventListener('keydown', function (e) {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
+        /* keyboard navigation: Tab moves between the buttons, and Enter / Space press the focused one; any other key still goes back to the field */
+        var a = document.activeElement, inUi = a && a.closest && a.closest('#ui');
+        if (e.key === 'Tab' || (inUi && (e.key === 'Enter' || e.key === ' '))) return;
         if (ta && document.activeElement !== ta) ta.focus({ preventScroll: true });
       }, true);
     })();
