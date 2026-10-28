@@ -45,8 +45,18 @@ As imagens-base (`visual/baselines/`) são do código **de onde a refatoração 
 
 ## Acesso ao app pelos testes
 
-Os testes leem `window.__colorUtil`, `window.__colorMap`, `window.Klang` e as classes `tools-open`, `info-open`, `palette-open`, `auto-on` no `<html>`.
-Na Fase 2 (zero globais `window.__*`) esse acesso passa para o namespace `window.Clavier`; os testes são atualizados no mesmo commit.
+O app expõe um único global, **`window.Clavier`**, somente leitura (selado em `js/main-v1.js`):
+
+| Propriedade | Conteúdo |
+|---|---|
+| `Clavier.colors` | funções puras de cor (`PAL`, `PAIRS`, `ratio`, `compose`, `validate`, `resolve`...) |
+| `Clavier.theme` | `map` (bg, fg, placeholder e vidro na tela agora), `choice` (o que o usuário escolheu), `set()` |
+| `Clavier.state` | o estado da interface: `{ tools, palette, info, auto }` |
+| `Clavier.device` | `{ phone }` |
+
+Os poemas do Auto-jam são dados em `js/poems-v1.js`: os testes os importam com `import('/js/poems-v1.js')` (a mesma instância que a página usa).
+Além disso os testes leem as classes `tools-open`, `info-open`, `palette-open`, `auto-on`, `is-mobile`, `is-wide` e `data-ui` no `<html>` e o `window.Klang` do motor.
+A lógica pura (cores e máquina de estados) também tem testes sem navegador: `node --test tests/unit`.
 
 ## Bugs conhecidos documentados por testes
 
