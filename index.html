@@ -120,6 +120,21 @@
         function sync() { root.classList.toggle('is-mobile', mobile || !!(nq && nq.matches)); }
         if (nq) { sync(); if (nq.addEventListener) nq.addEventListener('change', sync); else if (nq.addListener) nq.addListener(sync); }
         if (!mobile) return;
+        /* Share clip: the signal that reaches the speakers (after the master chain below, which wraps this) is ALSO copied into an in-memory MediaStream.
+           Nothing is recorded by this alone; the clip recorder in the Share script only reads this stream during the first 10 s of a session. */
+        (function () {
+          var taps = new WeakMap(), base = AudioNode.prototype.connect;
+          AudioNode.prototype.connect = function (dest) {
+            if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode) {
+              try {
+                var ctx = dest.context, t = taps.get(ctx);
+                if (!t && ctx.createMediaStreamDestination) { t = ctx.createMediaStreamDestination(); taps.set(ctx, t); window.__tap = t; }
+                if (t) base.call(this, t);
+              } catch (e) {}
+            }
+            return base.apply(this, arguments);
+          };
+        })();
         var chains = new WeakMap(), rawConnect = AudioNode.prototype.connect;
         AudioNode.prototype.connect = function (dest) {
           if (typeof AudioDestinationNode !== 'undefined' && dest instanceof AudioDestinationNode && !this.__clavierMaster) {
@@ -744,10 +759,10 @@
           }
           return 'hsl(' + Math.round(h * 360) + ',' + Math.round(sa * 100) + '%,' + (l * k * 100).toFixed(2) + '%)';
         }
-        /* the card, drawn synchronously (the share sheet needs the tap that is still running) */
-        function card() {
-          var ta = document.querySelector('textarea'), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-          var ctx = cv.getContext('2d'), bg = getComputedStyle(document.body).backgroundColor, fg = getComputedStyle(ta).color, face = getComputedStyle(ta).fontFamily || 'serif';
+        /* the card (both the PNG and the clip frames). more = true appends an ellipsis (the clip hit its 10 s limit while you were still playing). tail = true: when the text is longer than the card, show its LAST lines (the way the field scrolls);
+           tail = false: the first lines, ending with an ellipsis. */
+        function drawCard(ctx, ta, tail, more) {
+          var bg = getComputedStyle(document.body).backgroundColor, fg = getComputedStyle(ta).color, face = getComputedStyle(ta).fontFamily || 'serif';
           function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
           ctx.fillStyle = dim(bg, .72); ctx.fillRect(0, 0, W, H);               /* canvas: lightness -28% */
           var cw = Math.round(W * .88), k = cw / 842, ch = Math.round(cw * 5 / 4);   /* ONE card, 88% of the width, 4:5: no frame around it */
@@ -756,20 +771,99 @@
           ctx.save(); rr(x, y, cw, ch, 36 * k); ctx.clip();
           ctx.fillStyle = fg; ctx.textBaseline = 'top'; var fs = Math.round(44 * W / 390);   /* 44px on a 390-wide phone screen, scaled to the 1080-wide image */
           ctx.font = '400 ' + fs + 'px ' + face;
-          var lh = Math.round(fs * 1.25), pad = Math.round(104 * k), lines = wrap(ctx, ta.value, cw - 2 * pad), fit = Math.floor((ch - 2 * pad) / lh);
-          if (lines.length > fit) {   /* from the top; when it does not fit, the last line ends with an ellipsis */
-            lines = lines.slice(0, fit); var last = lines[fit - 1].replace(/\s+$/, '');
-            while (last && ctx.measureText(last + '\u2026').width > cw - 2 * pad) last = last.slice(0, -1).replace(/\s+$/, '');
-            if (last.length < lines[fit - 1].length && last.indexOf(' ') > 0) last = last.slice(0, last.lastIndexOf(' ')).replace(/[\s,.;:!?-]+$/, '');   /* cut at a whole word */
-            lines[fit - 1] = last + '\u2026';
+          var lh = Math.round(fs * 1.25), pad = Math.round(104 * k), lines = wrap(ctx, ta.value + (more ? '\u2026' : ''), cw - 2 * pad), fit = Math.floor((ch - 2 * pad) / lh);   /* more: an ellipsis after the text says the piece goes on */
+          if (lines.length > fit) {
+            if (tail) lines = lines.slice(lines.length - fit);
+            else {   /* from the top; when it does not fit, the last line ends with an ellipsis */
+              lines = lines.slice(0, fit); var last = lines[fit - 1].replace(/\s+$/, '');
+              while (last && ctx.measureText(last + '…').width > cw - 2 * pad) last = last.slice(0, -1).replace(/\s+$/, '');
+              if (last.length < lines[fit - 1].length && last.indexOf(' ') > 0) last = last.slice(0, last.lastIndexOf(' ')).replace(/[\s,.;:!?-]+$/, '');   /* cut at a whole word */
+              lines[fit - 1] = last + '…';
+            }
           }
           lines.forEach(function (l, i) { ctx.fillText(l, x + pad, y + pad + i * lh); });
           ctx.restore();
+        }
+        /* the card as a PNG, drawn synchronously (the share sheet needs the tap that is still running) */
+        function card() {
+          var ta = document.querySelector('textarea'), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          drawCard(cv.getContext('2d'), ta, false);
           var b64 = cv.toDataURL('image/png').split(',')[1], bin = atob(b64), bytes = new Uint8Array(bin.length);
           for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
           cv.width = cv.height = 0;                                              /* release the canvas */
           return new File([bytes], 'clavier.png', { type: 'image/png' });
         }
+        /* ---- the first 10 seconds of a session, as a video with sound ----------------------------------------------------------------------------------------
+           A session starts with the first key and ends with NEW / an emptied field / leaving the page; each session has ONE clip. The recorder runs hidden, in
+           memory only (no disk, no storage, no network, no microphone: the sound comes from the engine itself). It records only while you play (it pauses after
+           3 s without a key) until it has 10 s, then stops by itself; if you are still playing at that moment the writing ends with "..." (the rest is in the product). Nothing leaves the device unless you tap Share. A new session throws the old clip away. */
+        var LIMIT = 10000, IDLE = 3000, clip = null;
+        function clipSupported() {
+          return root.classList.contains('is-mobile') && window.MediaRecorder && navigator.canShare && window.__tap && HTMLCanvasElement.prototype.captureStream;
+        }
+        function clipMime() {
+          var c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+          for (var i = 0; i < c.length; i++) if (MediaRecorder.isTypeSupported(c[i])) return c[i];
+          return '';
+        }
+        function discardClip() {
+          var c = clip; if (!c) return; clip = null;
+          clearInterval(c.tick); cancelAnimationFrame(c.raf);
+          try { c.rec.ondataavailable = null; c.rec.onstop = null; c.rec.onerror = null; if (c.rec.state !== 'inactive') c.rec.stop(); } catch (e) {}
+          try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+          c.cv.width = c.cv.height = 0; c.chunks = [];
+        }
+        function pauseClip(c) { if (c.rec.state === 'recording') { c.ms += Date.now() - c.at; try { c.rec.pause(); } catch (e) {} } }
+        function resumeClip(c) { if (c.rec.state === 'paused') { c.at = Date.now(); try { c.rec.resume(); } catch (e) {} } }
+        function finishClip(c) {   /* stops the recorder; resolves with the File (or null) */
+          if (c.done) return c.done;
+          c.done = new Promise(function (res) {
+            c.rec.onstop = function () {
+              clearInterval(c.tick); cancelAnimationFrame(c.raf);
+              try { c.vs.getVideoTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+              c.cv.width = c.cv.height = 0;
+              var t = c.rec.mimeType || c.mime || 'video/mp4';
+              c.file = c.chunks.length ? new File(c.chunks, 'clavier.' + (/mp4/.test(t) ? 'mp4' : 'webm'), { type: t.split(';')[0] }) : null; c.chunks = [];
+              res(c.file);
+            };
+            try { if (c.rec.state === 'paused') c.rec.resume(); c.rec.stop(); } catch (e) { res(null); }
+          });
+          return c.done;
+        }
+        function startClip() {
+          var ta = document.querySelector('textarea'); if (!ta || !clipSupported()) return;
+          var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          var ctx = cv.getContext('2d'), c = { cv: cv, chunks: [], ms: 0, at: Date.now(), key: Date.now(), born: Date.now(), mime: clipMime(), file: null, done: null, shown: null };
+          function paint(force) { var v = ta.value + (c.more ? '\u2026' : ''); if (force || v !== c.shown) { c.shown = v; drawCard(ctx, ta, true, c.more); } }
+          try {
+            paint(true);
+            c.vs = cv.captureStream(30);
+            window.__tap.stream.getAudioTracks().forEach(function (t) { c.vs.addTrack(t); });
+            c.rec = new MediaRecorder(c.vs, c.mime ? { mimeType: c.mime, videoBitsPerSecond: 4000000 } : {});
+            c.rec.ondataavailable = function (e) { if (e.data && e.data.size) c.chunks.push(e.data); };
+            c.rec.start(500);
+          } catch (e) { clip = c; discardClip(); return; }
+          clip = c;
+          (function frame() { if (clip !== c) return; paint(false); c.raf = requestAnimationFrame(frame); })();
+          c.tick = setInterval(function () {
+            var now = Date.now();
+            if (!ta.value && now - c.born > 1500) { discardClip(); return; }        /* the field was emptied (NEW, select-all + delete...): a new session */
+            if (c.rec.state === 'recording') {
+              var played = c.ms + (now - c.at);
+              if (now - c.key > IDLE) { c.more = false; pauseClip(c); }
+              else if (played >= LIMIT) finishClip(c);
+              else if (played >= LIMIT - 800) c.more = true;                    /* still playing as the 10 s run out: the last frames end with "..." */
+            }
+          }, 200);
+        }
+        function touchClip() {   /* called on every key / input */
+          if (!clip) { startClip(); return; }
+          clip.key = Date.now(); if (!clip.done) resumeClip(clip);
+        }
+        window.addEventListener('keydown', function (e) { if (e.key && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey && !root.classList.contains('info-open')) touchClip(); }, true);
+        document.addEventListener('input', function (e) { if (e.target && e.target.tagName === 'TEXTAREA' && e.target.value) touchClip(); }, true);
+        document.addEventListener('visibilitychange', function () { if (document.hidden && clip && !clip.done) pauseClip(clip); });
+        window.addEventListener('pagehide', discardClip);
         function copyLink() {
           function ok() { toast('Link copied'); }
           function old() {
@@ -779,13 +873,24 @@
           }
           if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL_).then(ok, old); else old();
         }
+        function send(data) {
+          return navigator.share(data).catch(function (e) { if (!e || e.name !== 'AbortError') copyLink(); }).then(function () { if (window.__unlockAudio) window.__unlockAudio(); });   /* the sheet can interrupt the audio session: bring it back */
+        }
+        function sharePng() {
+          var data = { title: 'Clavier', text: 'Clavier: jam your solo', url: URL_ };
+          try { var f = card(), withFile = { files: [f], title: 'Clavier', text: URL_ }; if (navigator.canShare(withFile)) data = withFile; } catch (e) {}
+          return send(data);
+        }
         document.getElementById('t-share').addEventListener('click', function () {
           if (!navigator.share) { copyLink(); return; }
-          var data = { title: 'Clavier', text: 'Clavier: jam your solo', url: URL_ };
-          if (root.classList.contains('is-mobile') && navigator.canShare) {
-            try { var f = card(), withFile = { files: [f], title: 'Clavier', text: URL_ };   /* the link travels with the image where the app keeps it */ if (navigator.canShare(withFile)) data = withFile; } catch (e) {}
-          }
-          navigator.share(data).catch(function (e) { if (!e || e.name !== 'AbortError') copyLink(); }).then(function () { if (window.__unlockAudio) window.__unlockAudio(); });   /* the sheet can interrupt the audio session: bring it back */
+          if (!(root.classList.contains('is-mobile') && navigator.canShare)) { send({ title: 'Clavier', text: 'Clavier: jam your solo', url: URL_ }); return; }
+          var c = clip;
+          if (!c) { sharePng(); return; }                                        /* nothing played yet in this session: the static card, as before */
+          var ready = c.file ? Promise.resolve(c.file) : Promise.race([finishClip(c), new Promise(function (r) { setTimeout(function () { r(null); }, 1500); })]);
+          ready.then(function (f) {
+            var data = f && { files: [f], title: 'Clavier', text: URL_ };
+            if (data && navigator.canShare(data)) send(data); else sharePng();   /* no clip, or this browser cannot share it: the card */
+          }).catch(sharePng);
         });
       })();
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setTools(false); });
