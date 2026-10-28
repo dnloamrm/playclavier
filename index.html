@@ -348,16 +348,9 @@
       #info-view::-webkit-scrollbar { display: none; }
       #info-view .info-in { margin: 0; width: 100%; text-align: left; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
       #info-view .info-in::-webkit-scrollbar { display: none; }
-      #info-view p {
-        margin: 0 0 28px;
-        font-size: 20px; font-weight: 400; line-height: 28px; letter-spacing: 0; color: var(--c-fg, #F9FAFA);
-      }
+      /* Info type: Arizona Sans, 28px / 35px, on desktop and phones */
+      #info-view p { font-family: "Arizona Sans", sans-serif; font-size: 28px; font-weight: 400; line-height: 35px; letter-spacing: 0; margin: 0 0 35px; color: var(--c-fg, #F9FAFA); }
       #info-view p:last-child { margin-bottom: 0; }
-      /* the opening sentence is set exactly like the piano text: same face, size, leading and tracking */
-      #info-view p.lead { font-family: "Arizona Text", serif; font-size: 56px; line-height: normal; letter-spacing: 1px; margin-bottom: 56px; }
-      #info-view p.lead:last-child { margin-bottom: 0; }
-      .is-mobile #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; }
-      @media (max-width: 767px) { #info-view p.lead { font-size: 40px; line-height: 50px; margin-bottom: 40px; } }
       @media (min-width: 1024px) {
         /* the opening sentence spans 6 columns of the 12-col grid (40px margins, 48px gutters); the second block follows after a paragraph gap */
         html:not(.is-mobile) #info-view p.lead { width: calc((100vw - 80px - 11 * 48px) / 12 * 6 + 5 * 48px); }
