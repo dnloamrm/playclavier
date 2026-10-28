@@ -144,7 +144,7 @@
       })();
     </script>
     <script>
-      /* Info view controller (runs before first paint so /#info opens instantly). */
+      /* Info view controller. The address bar always stays on the bare domain. */
       (function () {
         var ua = navigator.userAgent, safari = /iPad|iPhone|iPod/.test(ua) || (/^((?!chrome|android|crios|fxios).)*safari/i.test(ua));
         if (safari) { var cpt = HTMLMediaElement.prototype.canPlayType; HTMLMediaElement.prototype.canPlayType = function (t) { return /ogg|opus|vorbis/i.test(t) ? '' : cpt.call(this, t); }; }
@@ -159,26 +159,16 @@
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
           root.classList.add('info-open');
           var v = document.getElementById('info-view'); if (v) v.focus({ preventScroll: true });
-          if (push) history.pushState({ info: 1 }, '', '#info');
         }
         function close(fromPop) {
           if (!isOpen()) return;
           root.classList.remove('info-open');
-          if (!fromPop) {
-            if (history.state && history.state.info) history.back();
-            else history.replaceState(null, '', location.pathname + location.search);
-          }
           var t = field(); if (t) t.focus({ preventScroll: true });
         }
         window.__openInfo = function () { open(true); };
         window.__closeInfo = function () { close(false); };
-        /* a refresh always lands on the home screen; a direct link to /#info still opens Info */
-        var nav = window.performance && performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-        if (location.hash === '#info' && nav && nav.type === 'reload') history.replaceState(null, '', location.pathname + location.search);
-        if (location.hash === '#info') root.classList.add('info-open');
-        window.addEventListener('popstate', function () {
-          if (location.hash === '#info') open(false); else close(true);
-        });
+        /* One address only: Info never touches the URL (no #info, no sub-links). An old /#info link simply lands on the home screen. */
+        if (location.hash === '#info') history.replaceState(null, '', location.pathname + location.search);
         document.addEventListener('DOMContentLoaded', function () {
           var b = document.getElementById('info-close'); if (b) b.addEventListener('click', function () { close(false); });
         });
