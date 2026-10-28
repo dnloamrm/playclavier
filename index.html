@@ -346,14 +346,17 @@
         overflow: hidden; outline: none;   /* the text scrolls inside .info-in, which stops above the buttons: that band stays clear */
       }
       #info-view::-webkit-scrollbar { display: none; }
-      #info-view .info-in { margin: 0; width: 100%; text-align: left; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
+      #info-view .info-in { margin: 0; width: 100%; text-align: left; display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }   /* top-left, like the home text; ends above the dock band */
       #info-view .info-in::-webkit-scrollbar { display: none; }
       /* Info type: Arizona Sans, 28px / 35px, on desktop and phones */
       #info-view p { font-family: "Arizona Sans", sans-serif; font-size: 28px; font-weight: 400; line-height: 35px; letter-spacing: 0; margin: 0 0 35px; color: var(--c-fg, #F9FAFA); }
       #info-view p:last-child { margin-bottom: 0; }
+      /* the text block is centred on the screen and spans 4 columns of the grid (desktop: columns 5 to 8 of 12; phones: the 4 columns are the full width) */
+      #info-view .info-in > p { width: 100%; }
+      #info-view .info-in > p:first-child { margin-top: auto; }
+      #info-view .info-in > p:last-child { margin-bottom: auto; }   /* auto margins centre the block vertically and fall back to the top when it is taller than the area */
       @media (min-width: 1024px) {
-        /* the opening sentence spans 6 columns of the 12-col grid (40px margins, 48px gutters); the second block follows after a paragraph gap */
-        html:not(.is-mobile) #info-view p.lead { width: calc((100vw - 80px - 11 * 48px) / 12 * 6 + 5 * 48px); }
+        html:not(.is-mobile) #info-view .info-in > p { width: calc((100vw - 80px - 11 * 48px) / 12 * 4 + 3 * 48px); }
       }
       .info-open #info-view { opacity: 1; visibility: visible; }
       /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
