@@ -1,0 +1,15 @@
+{
+  "name": "clavier-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Characterisation tests for Clavier. Run against any deployed URL: node run.js --url=https://playclavier.vercel.app",
+  "scripts": {
+    "test": "node run.js",
+    "test:visual:update": "node run.js --only=visual --update"
+  },
+  "dependencies": {
+    "pixelmatch": "5.3.0",
+    "pngjs": "7.0.0",
+    "puppeteer-core": "24.2.0"
+  }
+}
