@@ -902,8 +902,8 @@
           return send(data);
         }
         document.getElementById('t-share').addEventListener('click', function () {
-          if (!navigator.share) { copyLink(); return; }
-          if (!(root.classList.contains('is-mobile') && navigator.canShare)) { send({ title: 'Clavier', text: 'Clavier: jam your solo', url: URL_ }); return; }
+          /* desktop (and anything that is not a phone): always the link on the clipboard, never a native sheet without the image */
+          if (!navigator.share || !(root.classList.contains('is-mobile') && navigator.canShare)) { copyLink(); return; }
           var c = clip;
           if (!c) { sharePng(); return; }                                        /* nothing played yet in this session: the static card, as before */
           var ready = c.file ? Promise.resolve(c.file) : Promise.race([finishClip(c), new Promise(function (r) { setTimeout(function () { r(null); }, 1500); })]);
