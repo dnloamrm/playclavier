@@ -4,10 +4,10 @@ const { sleep, click, openTools, typeInto } = require('../lib/browser');
 
 const LINK = 'https://playclavier.vercel.app';
 
-test('share (phone, native files): the PNG card (1080x1920) is handed to the share sheet at once, with title and link', async ({ open }) => {
+test('share (phone, native files, nothing played): the PNG card (1080x1920) is handed to the share sheet at once, with title and link', async ({ open }) => {
   const page = await open({ width: 390, height: 844, mobile: true, shareSpy: 'files' });
   try {
-    await typeInto(page, 'Clair de lune, un peu de clarte');
+    await page.evaluate(() => { document.querySelector('textarea').value = 'Clair de lune, un peu de clarte'; });   // set, not typed: no session, so no clip
     await openTools(page);
     await page.evaluate(() => { window.__t0 = performance.now(); document.getElementById('t-share').click(); });
     const r = await page.evaluate(async () => {
@@ -23,6 +23,23 @@ test('share (phone, native files): the PNG card (1080x1920) is handed to the sha
     assert(r.title === 'Clavier' && r.text === LINK, `title/text: ${r.title} / ${r.text}`);
     assert(r.toast === 'none', 'a note is shown on phones');
     assert(r.outer.join() !== r.card.join(), 'canvas and card have the same colour');
+  } finally { await page.close(); }
+}, { tags: ['share'] });
+
+test('share (phone): after playing, the sheet receives a VIDEO clip with sound; NEW throws it away (the next share is the card); a new session gets its own clip', async ({ open }) => {
+  const page = await open({ width: 390, height: 844, mobile: true, shareSpy: 'files' });
+  try {
+    const shared = async () => { await page.evaluate(() => { window.__shared = null; document.getElementById('t-share').click(); }); await sleep(1800); return page.evaluate(() => { const d = window.__shared; return d && d.files && d.files[0] ? { type: d.files[0].type, name: d.files[0].name, size: d.files[0].size } : null; }); };
+    await typeInto(page, 'hello world', 110); await openTools(page);
+    const v = await shared();
+    assert(v && /^video\//.test(v.type) && v.size > 10000, 'no video after playing: ' + JSON.stringify(v));
+    await click(page, 't-new'); await sleep(2300);
+    const p = await shared();
+    assert(p && p.type === 'image/png', 'after NEW the share must be the card, got ' + JSON.stringify(p));
+    await page.evaluate(() => document.querySelector('textarea').focus()); await page.keyboard.type('second', { delay: 120 }); await sleep(300);
+    const v2 = await shared();
+    assert(v2 && /^video\//.test(v2.type), 'the new session has no clip: ' + JSON.stringify(v2));
+    assert(page.errors.length === 0, 'page errors: ' + page.errors.join(' | '));
   } finally { await page.close(); }
 }, { tags: ['share'] });
 
@@ -55,4 +72,4 @@ test('share (desktop where navigator.share exists, e.g. Safari/macOS, Edge): cop
     assert(await page.evaluate(() => window.__shared) == null, 'the native share sheet was opened on desktop');
     assert(await page.evaluate(() => window.__copied) === LINK, 'link was not copied');
   } finally { await page.close(); }
-}, { tags: ['share'], knownFailing: 'desktop opens the native sheet (link only) whenever navigator.share exists (Phase 1 f)' });
+}, { tags: ['share'] });

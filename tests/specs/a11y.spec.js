@@ -43,16 +43,19 @@ test('keyboard: Enter and Space press the focused button (the whole dock works w
   } finally { await page.close(); }
 }, { tags: ['a11y'] });
 
-test('keyboard: typing while a button has focus goes back to the field; Tab and Shift+Tab never type', async ({ open }) => {
+test('keyboard: with a button focused no key is redirected; with nothing focused text keys go to the field; Tab never types', async ({ open }) => {
   const page = await open({});
   try {
     await startFromField(page);
-    await page.keyboard.press('Tab'); await sleep(80);
+    await tabTo(page, 't-new');
     await page.keyboard.type('xy', { delay: 60 }); await sleep(200);
-    assert(await text(page) === 'xy', 'letters did not reach the field: "' + await text(page) + '"');
-    assert(await page.evaluate(() => document.activeElement.tagName) === 'TEXTAREA', 'focus was not handed back to the field');
+    assert(await text(page) === '', 'letters were redirected to the field while a button had the focus: "' + await text(page) + '"');
+    assert(await page.evaluate(() => document.activeElement.id) === 't-new', 'the focus left the button');
+    await page.evaluate(() => document.activeElement.blur()); await sleep(100);
+    await page.keyboard.type('ab', { delay: 60 }); await sleep(200);
+    assert(await text(page) === 'ab', 'with nothing focused the letters must reach the field: "' + await text(page) + '"');
     await page.keyboard.press('Tab'); await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift'); await sleep(100);
-    assert(await text(page) === 'xy', 'Tab typed something');
+    assert(await text(page) === 'ab', 'Tab typed something');
   } finally { await page.close(); }
 }, { tags: ['a11y'] });
 
@@ -106,7 +109,7 @@ test('a11y: the "+" button keeps one static name and exposes its state with aria
     await click(page, 't-info'); await sleep(250); const info = await read();
     assert(info.info === closed.info && info.info.endsWith('|false'), '"i" announces a state or swaps its label: ' + info.info);
   } finally { await page.close(); }
-}, { tags: ['a11y'], knownFailing: '"+" swaps label and aria-pressed together, "i" announces "Hide info" although it does nothing (Phase 1 c)' });
+}, { tags: ['a11y'] });
 
 test('a11y: the palette is a group of toggle buttons (not a listbox) and the dock is not a toolbar without arrow-key support', async ({ open }) => {
   const page = await open({});
@@ -116,7 +119,7 @@ test('a11y: the palette is a group of toggle buttons (not a listbox) and the doc
     assert(r.pal !== 'listbox' && r.opt !== 'option' && r.pressed, `palette semantics: ${r.pal}/${r.opt}, aria-pressed ${r.pressed}`);
     assert(r.tb !== 'toolbar', 'the dock is a toolbar but has no arrow-key navigation');
   } finally { await page.close(); }
-}, { tags: ['a11y'], knownFailing: 'palette is role=listbox without arrow keys; dock is role=toolbar without arrow keys (Phase 1 c)' });
+}, { tags: ['a11y'] });
 
 test('a11y: the live document keeps the static head (viewport-fit=cover, zoomable, theme-color #0B0D0E) after the app boots', async ({ open }) => {
   const page = await open({});

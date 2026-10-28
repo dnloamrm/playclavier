@@ -79,3 +79,15 @@ test('info: the text area stops above the buttons (it scrolls inside, nothing ru
     assert(m.gap >= 30, 'area ends ' + m.gap + 'px above the dock'); assert(!m.page, 'the whole page scrolls instead of the text area');
   } finally { await page.close(); }
 }, { tags: ['info'] });
+
+test('info: with the Info open the controls still work from the keyboard (Tab reaches them, Enter presses NEW)', async ({ open }) => {
+  const page = await open({});
+  try {
+    await typeInto(page, 'abc'); await openInfo(page);
+    await page.evaluate(() => document.getElementById('info-view').focus());
+    for (let n = 0; n < 12; n++) { if ((await page.evaluate(() => document.activeElement.id)) === 't-new') break; await page.keyboard.press('Tab'); await sleep(70); }
+    assert(await page.evaluate(() => document.activeElement.id) === 't-new', 'Tab never reached NEW with the Info open');
+    await page.keyboard.press('Enter'); await sleep(400);
+    assert(!(await classes(page)).info && await text(page) === '', 'Enter on NEW did not close the Info and clear the text');
+  } finally { await page.close(); }
+}, { tags: ['info'] });

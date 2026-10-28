@@ -16,7 +16,7 @@ test('shuffle: never repeats the previous background, starting from the default 
     });
     assert(bad === 0, bad + ' of 1500 draws repeated the previous background');
   } finally { await page.close(); }
-}, { tags: ['shuffle', 'colors'], knownFailing: 'compose(prev) compares with prev.bg, which is null for the default theme (Phase 1 d)' });
+}, { tags: ['shuffle', 'colors'] });
 
 test('shuffle: every draw is one of the 100 pairs and all 100 are reachable', async ({ open }) => {
   const page = await open({});

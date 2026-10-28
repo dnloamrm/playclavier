@@ -74,4 +74,16 @@ test('colors: a saved value that is not in the palette falls back to the default
     const v = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, fg: getComputedStyle(document.querySelector('textarea')).color }));
     assert(hex(v.bg) === '#0B0D0E' && hex(v.fg) === '#F9FAFA', `got bg ${v.bg}, fg ${v.fg}`);
   } finally { await page.close(); }
-}, { tags: ['colors'], knownFailing: 'clavier-colors from localStorage is not validated against the palette (Phase 1 j)' });
+}, { tags: ['colors'] });
+
+test('colors: a saved colour of the palette is kept, an unknown one is dropped, white is valid', async ({ open }) => {
+  const a = await open({ colors: { bg: '#8a1d34', fg: '#FFFFFF' } });
+  try { assert.eq(await a.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#8A1D34', '#FFFFFF'], 'palette colours (any case, white included)'); } finally { await a.close(); }
+  const b = await open({ colors: { bg: '#8A1D34', fg: '#123456' } });
+  try { assert.eq(await b.evaluate(() => [window.__colorMap.bg, window.__colorMap.fg]), ['#8A1D34', '#F9FAFA'], 'only the unknown colour falls back'); } finally { await b.close(); }
+}, { tags: ['colors'] });
+
+test('colors: the Info glass has a fallback tint for browsers without color-mix()', async ({ open }) => {
+  const page = await open({ colors: { bg: '#8A1D34', fg: '#FFFFFF' } });
+  try { assert(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--c-glass').trim()) === 'rgba(138,29,52,.55)', 'the --c-glass fallback is not set'); } finally { await page.close(); }
+}, { tags: ['colors'] });

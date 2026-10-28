@@ -84,3 +84,19 @@ test('layout: when the dock fits on ONE row (phones >= 393px) the text area stop
     assert.near(g, 16, 1, 'clearance above the one-row dock');
   } finally { await page.close(); }
 }, { tags: ['layout'], knownFailing: 'the reserved band always assumes a two-row dock, so on one row there are 72px instead of 16px (side effect of --btn 44px)' });
+
+test('layout: 821-1023px uses the desktop layout with the same 40px margins (no legacy 140px) and an 11-swatch palette', async ({ open }) => {
+  for (const [w, h] of [[821, 768], [900, 768], [1023, 768]]) {
+    const page = await open({ width: w, height: h });
+    try {
+      const m = await page.evaluate(() => { const r = document.querySelector('textarea').getBoundingClientRect(), c = document.documentElement.classList; return { left: r.left, right: innerWidth - r.right, mobile: c.contains('is-mobile'), wide: c.contains('is-wide') }; });
+      assert(!m.mobile && !m.wide, `${w}px classes: mobile ${m.mobile}, wide ${m.wide}`);
+      assert.near(m.left, 40, 1, `${w}px text left margin`); assert.near(m.right, 40, 1, `${w}px text right margin`);
+      await openTools(page); await page.evaluate(() => document.getElementById('t-fill').click()); await sleep(300);
+      const pw = await page.evaluate(() => document.getElementById('palette').getBoundingClientRect().width);
+      assert(pw <= w - 80 + 1, `${w}px: the palette (${pw}px) is wider than the margins allow`);
+    } finally { await page.close(); }
+  }
+  const wide = await open({ width: 1024, height: 768 });
+  try { assert(await wide.evaluate(() => document.documentElement.classList.contains('is-wide')), '1024px is not wide'); } finally { await wide.close(); }
+}, { tags: ['layout'] });
