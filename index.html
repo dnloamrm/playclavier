@@ -233,8 +233,10 @@
         display: flex; align-items: center; justify-content: center;
       }
       /* Info stays in the right corner but belongs to the expanded state: it shows and collapses together with the tools */
-      #ui #t-info { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s !important; }
-      .tools-open #ui #t-info { opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s !important; }
+      /* hidden by opacity + pointer-events + the inert attribute (set from JS with the tools state); NO visibility transition: Safari can leave an element
+         that transitions visibility inside a translate3d layer (#ui on phones) painted. The 0.2s fade stays on the opacity. */
+      #ui #t-info { opacity: 0; pointer-events: none; transition: opacity .2s ease !important; }
+      .tools-open #ui #t-info { opacity: 1; pointer-events: auto; }
       /* corner buttons are set as type, like every other label: +, X and I */
       /* every control is a Material Symbols Sharp, filled icon (self-hosted subset, 24px) */
       @font-face { font-family: "Material Symbols Sharp"; font-style: normal; font-weight: 100 700; font-display: block; src: url(/fonts/material-symbols/MaterialSymbolsSharp-Fill-v4.woff2) format("woff2"); }
@@ -401,7 +403,7 @@
     </div>
     <div id="palette" role="listbox" aria-label="Palette"></div>
     <button id="t-plus" class="corner" type="button" aria-expanded="false" aria-label="Show tools"><span class="ms p" aria-hidden="true">add</span><span class="ms x" aria-hidden="true">close</span></button>
-    <button id="t-info" class="corner" type="button" aria-pressed="false" aria-label="Show info"><span class="ms" aria-hidden="true">info_i</span></button>
+    <button id="t-info" class="corner" type="button" inert aria-pressed="false" aria-label="Show info"><span class="ms" aria-hidden="true">info_i</span></button>
     </div>
   </div>
   <section id="info-view" aria-label="Info" tabindex="-1"><div class="info-in"><p class="lead">Clavier is an interactive experience where you improvise using your computer keyboard.</p><p class="lead">Design and Code by Danilo Amorim.</p></div></section>
@@ -651,6 +653,7 @@
       var plus = document.getElementById('t-plus'), infoBtn = document.getElementById('t-info');
       function setTools(on) {
         root.classList.toggle('tools-open', on);
+        infoBtn.inert = !on;   /* out of the tab order and the accessibility tree while it is invisible */
         if (!on && mode) { mode = null; paintSelection(); }
         plus.setAttribute('aria-expanded', on ? 'true' : 'false'); plus.setAttribute('aria-label', on ? 'Hide tools' : 'Show tools');
       }
