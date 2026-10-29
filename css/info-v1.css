@@ -27,5 +27,5 @@ html.is-wide:not(.is-mobile) #info-view .info-in > p { width: calc((100vw - 80px
 /* while Info is up nothing blinks behind it: the text caret of the writing field is hidden */
 html.info-open textarea { caret-color: transparent; }
 .is-mobile #info-view {
-  padding: calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
+  padding: calc(var(--edge) + env(safe-area-inset-top, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--stack-max) + var(--clear)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
 }

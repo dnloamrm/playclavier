@@ -8,7 +8,7 @@ const geo = (page) => page.evaluate(() => {
   const r = (e) => document.querySelector(e).getBoundingClientRect(), v = window.__vv;
   return { plusBottom: Math.round(innerHeight - r('#t-plus').bottom), infoBottom: Math.round(innerHeight - r('#t-info').bottom), visibleBottom: Math.round(innerHeight - (v.offsetTop + v.height)) };
 });
-const glued = async (page) => { const g = await geo(page); return { ok: g.plusBottom - g.visibleBottom === 20 && g.infoBottom - g.visibleBottom === 20, g }; };
+const glued = async (page) => { const g = await geo(page); return { ok: g.plusBottom - g.visibleBottom === 20, g }; };
 
 test('ios keyboard: corner buttons stay 20px above the visible bottom (keyboard up, page scrolled, closed with and without blur, 5 fast cycles)', async ({ open }) => {
   const page = await open({ width: 390, height: 700, mobile: true, fakeViewport: true });

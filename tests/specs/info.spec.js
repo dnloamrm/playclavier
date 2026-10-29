@@ -19,7 +19,8 @@ for (const d of [{ w: 1440, h: 900, mobile: false }, { w: 1920, h: 1080, mobile:
       m.fs.forEach((f) => assert(/^28px\/35px Arizona Sans (left|start)$/.test(f), 'type: ' + f));
       if (!d.mobile) { assert.near(m.width, m.four, 1, '4 columns wide'); assert.near(m.left, m.col5, 1, 'starts at column 5'); assert.near(m.cx, d.w / 2, 1, 'horizontal centre'); }
       else { assert.near(m.left, 20, 1, 'phone left margin'); assert.near(m.width, d.w - 40, 1, 'phone width'); }
-      assert.near(m.topGap, m.bottomGap, 2, 'vertical centre');
+      if (!d.mobile) assert.near(m.topGap, m.bottomGap, 2, 'vertical centre');   /* phones: the top only keeps the edge margin, the bottom clears the dock */
+      else assert(m.topGap >= 19 && m.topGap <= m.bottomGap, 'phone: the text starts below the 20px edge and above the dock band');
     } finally { await page.close(); }
   }, { tags: ['info'] });
 }

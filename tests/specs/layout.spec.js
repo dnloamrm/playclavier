@@ -37,7 +37,7 @@ for (const d of PHONES) {
         if (state === 'palette') { await page.evaluate(() => { if (!document.documentElement.classList.contains('palette-open')) document.getElementById('t-fill').click(); }); await sleep(350); }
         const m = await page.evaluate(() => {
           const R = (e) => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }, c = document.documentElement.classList, tools = c.contains('tools-open'), pal = c.contains('palette-open');
-          const els = [['plus', document.getElementById('t-plus')]]; if (tools) { els.push(['info', document.getElementById('t-info')]); [...document.querySelectorAll('#dock .blk')].forEach((e, i) => els.push(['blk' + i, e])); } if (tools && pal) els.push(['palette', document.getElementById('palette')]);
+          const els = [['plus', document.getElementById('t-plus')]]; if (tools) { if (!c.contains('is-mobile')) els.push(['info', document.getElementById('t-info')]);   /* phones: it is inside the dock's 5th block */ [...document.querySelectorAll('#dock .blk')].forEach((e, i) => els.push(['blk' + i, e])); } if (tools && pal) els.push(['palette', document.getElementById('palette')]);
           const rects = els.map(([n, e]) => [n, R(e)]), hits = [];
           for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) { const a = rects[i][1], b = rects[j][1]; if (a.l < b.r - 0.5 && b.l < a.r - 0.5 && a.t < b.b - 0.5 && b.t < a.b - 0.5) hits.push(rects[i][0] + 'x' + rects[j][0]); }
           const blk = [...document.querySelectorAll('#dock .blk')].map(R), ta = R(document.querySelector('textarea')), dock = R(document.getElementById('dock')), pr = R(document.getElementById('palette')), plus = R(document.getElementById('t-plus')), info = document.getElementById('t-info');
@@ -47,7 +47,7 @@ for (const d of PHONES) {
         assert(m.hits.length === 0, `${who}: overlapping elements ${m.hits.join(',')}`);
         assert(m.top - m.taBottom >= 15.5, `${who}: the text is only ${(m.top - m.taBottom).toFixed(1)}px above the first control`);
         if (state === 'palette') assert.near(m.palGap, 12, 0.6, `${who}: palette above the dock`);
-        assert(m.rows === 2 && m.row1 === 3, `${who}: the dock is not the 2-row grid (rows ${m.rows}, first row ${m.row1} blocks)`);
+        assert(m.rows === 2 && m.row1 === 4, `${who}: the dock is not the 2-row grid (rows ${m.rows}, first row ${m.row1} blocks: NEW, PLAY+AUTO, SHARE, i)`);
         assert(m.maxRight <= 0.5 && m.minLeft >= 19.5, `${who}: something leaves the 20px margins`);
         if (state !== 'closed') assert.near(m.dockToPlus, 12, 0.6, `${who}: dock to corner buttons`);
         if (state === 'closed') assert(m.infoOpacity === '0' && m.infoInert, `${who}: the Info button is visible or focusable`); else assert(m.infoOpacity === '1' && !m.infoInert, `${who}: the Info button is hidden`);
@@ -57,13 +57,13 @@ for (const d of PHONES) {
   }, { tags: ['layout'] });
 }
 
-test('layout: phone buttons are 46px, 12px between blocks, SHARE is right-aligned in row 1, the dock starts at the 20px margin', async ({ open }) => {
+test('layout: phone buttons are 46px, 12px between blocks, SHARE and the "i" block are right-aligned in row 1, the dock starts at the 20px margin', async ({ open }) => {
   const page = await open({ width: 390, height: 844, mobile: true });
   try {
     await openTools(page);
-    const m = await page.evaluate(() => { const R = (i) => document.getElementById(i).getBoundingClientRect(), b = [...document.querySelectorAll('#dock .blk')].map((e) => e.getBoundingClientRect()); return { btn: R('t-new').width, plus: R('t-plus').width, left: Math.min(...b.map((r) => r.left)), gapH: b[1].left - b[0].right, gapV: b[2].top - b[0].bottom, shareRight: innerWidth - b[3].right, shareTop: b[3].top, newTop: b[0].top }; });
+    const m = await page.evaluate(() => { const R = (i) => document.getElementById(i).getBoundingClientRect(), b = [...document.querySelectorAll('#dock .blk')].map((e) => e.getBoundingClientRect()); return { btn: R('t-new').width, plus: R('t-plus').width, left: Math.min(...b.map((r) => r.left)), gapH: b[1].left - b[0].right, gapV: b[2].top - b[0].bottom, shareRight: innerWidth - b[4].right, shareToInfo: b[4].left - b[3].right, shareTop: b[3].top, newTop: b[0].top }; });
     assert.near(m.btn, 46, 1, 'dock button'); assert.near(m.plus, 46, 1, 'corner button'); assert.near(m.left, 20, 1, 'dock left'); assert.near(m.gapH, 12, 1, 'horizontal block gap'); assert.near(m.gapV, 12, 1, 'row gap');
-    assert.near(m.shareRight, 20, 1, 'SHARE is not at the right margin'); assert.near(m.shareTop, m.newTop, 1, 'SHARE is not in the first row');
+    assert.near(m.shareRight, 20, 1, 'the "i" block (last in row 1) is not at the right margin'); assert.near(m.shareToInfo, 12, 1, 'the "i" block is not right next to SHARE'); assert.near(m.shareTop, m.newTop, 1, 'SHARE is not in the first row');
   } finally { await page.close(); }
 }, { tags: ['layout'] });
 
