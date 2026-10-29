@@ -389,7 +389,7 @@
         width: 100% !important; height: var(--vvh, 100dvh) !important; overflow: hidden !important;
       }
       .is-mobile #info-view {
-        padding: calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
+        padding: calc(var(--edge) + env(safe-area-inset-top, 0px)) max(var(--edge), env(safe-area-inset-right, 0px)) calc(var(--dock-b) + var(--btn) * 3 + var(--gap) + var(--block-gap) + var(--clear) + var(--sab, 0px)) max(var(--edge), env(safe-area-inset-left, 0px));   /* same top as the home text; the bottom clears the expanded dock (3 rows), so nothing moves when the tools open */
       }
     </style>
   </head>
@@ -656,6 +656,15 @@
       }
       /* Controls: "+" shows/hides the tools dock, "i" shows/hides Info, the dock plays, runs Auto-Type or starts a new text */
       var plus = document.getElementById('t-plus'), infoBtn = document.getElementById('t-info');
+      /* phones: the "i" button sits in the dock, in the block next to Share; elsewhere it is the right corner button */
+      var dockEl = document.getElementById('dock'), infoBlk = document.createElement('div'); infoBlk.className = 'blk';
+      function placeInfo() {
+        var inDock = root.classList.contains('is-mobile');
+        if (inDock === (infoBtn.parentNode === infoBlk)) return;
+        if (inDock) { infoBtn.classList.remove('corner'); infoBlk.appendChild(infoBtn); dockEl.appendChild(infoBlk); }
+        else { infoBtn.classList.add('corner'); infoBlk.parentNode && infoBlk.parentNode.removeChild(infoBlk); plus.parentNode.appendChild(infoBtn); }
+      }
+      placeInfo(); new MutationObserver(placeInfo).observe(root, { attributes: true, attributeFilter: ['class'] });
       function setTools(on) {
         root.classList.toggle('tools-open', on);
         if (!on && mode) { mode = null; paintSelection(); }
