@@ -35,6 +35,7 @@
     <link rel="modulepreload" href="/js/stack-v1.js">
     <link rel="modulepreload" href="/js/has-fallback-v1.js">
     <script src="/js/colors-v1.js"></script>
+    <script src="/js/picks-v1.js"></script>
     <script>
       /* Bootstrap: the only inline logic. It runs before the first paint, so the page appears already in the right theme and layout.
            - device: a phone (touch) or a narrow window gets the phone layout (class is-mobile); a window >= --bp-wide gets is-wide. The two
@@ -65,8 +66,14 @@
         }
         [nq, wq].forEach(function (q) { if (q.addEventListener) q.addEventListener('change', layout); else if (q.addListener) q.addListener(layout); });
         layout();
-        /* the engine's own contract: which audio config it loads (the phone one has softer envelopes) */
-        if (phone) window.__audioConfig = 'audio/config.mobile.js';
+        /* ---- this visit's piano and piece: drawn on every load, never the previous visit's (the engine reads both when it boots) ---- */
+        var last = null;
+        try { last = JSON.parse(localStorage.getItem('clavier-last') || 'null'); } catch (e) {}
+        var pick = ns.createPicks().choose(last);
+        try { localStorage.setItem('clavier-last', JSON.stringify({ piano: pick.piano.id, song: pick.song.id })); } catch (e) {}
+        window.__audioConfig = phone ? pick.piano.mobile : pick.piano.config;   /* the phone config has softer envelopes */
+        window.__song = pick.song.file;
+        Object.defineProperty(ns, 'pick', { value: Object.freeze({ piano: pick.piano.id, song: pick.song.id }) });
 
         /* ---- theme ---- */
         var choice = { bg: null, fg: null }, map = null, listeners = [];

@@ -1,15 +1,24 @@
-Clavier - piano sounds
+Clavier - sounds and music
 
-Piano samples: "Salamander Grand Piano" (Yamaha C5, V3) by Alexander Holm,
-licensed under Creative Commons Attribution 3.0 (CC BY 3.0):
-https://creativecommons.org/licenses/by/3.0/
-Distribution used: FreePats - https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html
-Changes: samples trimmed, level-matched and re-encoded (Opus/MP3) for web playback.
+Every page load draws one piano and one piece (never the previous visit's). All sample banks are real recordings of real
+pianos, trimmed, level-matched and re-encoded (Opus/MP3) for web playback.
 
-Alternate bank kept in the project (not active): "Upright Piano KW" (Kawai upright),
-CC0 1.0 public domain dedication, recorded by Gonzalo and Roberto - FreePats.
+Pianos
+- "Salamander Grand Piano" (Yamaha C5, V3) by Alexander Holm. CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+  Distribution used: FreePats - https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html
+- "Upright Piano KW" (Kawai upright), recorded by Gonzalo and Roberto. CC0 1.0 - FreePats.
+- "Splendid Grand Piano" (Steinway), samples released into the public domain by AKAI; FLAC conversion and SFZ mapping by kinwie -
+  https://github.com/sfzinstruments/SplendidGrandPiano
+- "Headroom Piano" (Yamaha C3, close microphones) by Bengt Nilsson. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+  SFZ mapping by kinwie, with the author's permission - https://github.com/sfzinstruments/BengtNilsson.HeadroomPiano
+- "Grand Piano, Kawai" and "Upright Piano, Knight" from the Versilian Community Sample Library (VCSL) by Versilian Studios LLC.
+  CC0 1.0 - https://github.com/sgossner/VCSL
 
-Music played by the keyboard: "Clair de lune" (Suite bergamasque, 1905) by Claude Debussy
-(1862-1918), public domain. Note data from the Mutopia Project MIDI (typeset by Keith OHara,
-public domain / no rights reserved) - https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1778
-Changes: merged to a single track and re-voiced with melody/accompaniment velocities.
+Music (all public domain; note data from the Mutopia Project MIDI files, https://www.mutopiaproject.org)
+- "Clair de lune" (Suite bergamasque, 1905), Claude Debussy. Typeset by Keith OHara (id 1778).
+- "Gymnopedie No. 1", Erik Satie. Typeset by Evin Robertson (Mutopia-2014/12/14-37).
+- "Prelude Op. 28 No. 15, Raindrop", Frederic Chopin. Typeset by Magnus Lewis-Smith (Mutopia-2015/01/16-471).
+- "Prelude in C, BWV 846" (The Well-Tempered Clavier I), Johann Sebastian Bach. Typeset by Tobias Erbsland (Mutopia-2011/09/12-5).
+- "Fur Elise", WoO 59, Ludwig van Beethoven. Typeset by Stelios Samelis (Mutopia-2015/08/18-931).
+- "Arabesque No. 1", Claude Debussy. Typeset by Keith OHara (Mutopia-2011/10/25-1777).
+Changes: merged to a single track and re-voiced with melody (60) and accompaniment (46) velocities.

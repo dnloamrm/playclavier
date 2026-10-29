@@ -63,3 +63,22 @@ test('audio: the tap exists on desktop too (the share clip needs it) and no phon
     assert(!log.some((c) => c.from === 'GainNode' && Math.abs(c.d.gain - Math.pow(10, -4 / 20)) < 0.001 && c.to === 'AudioDestinationNode'), 'the phone master gain is on the desktop path');
   } finally { await page.close(); }
 }, { tags: ['audio'] });
+
+test('picks: every reload draws another piano and another piece (never the previous ones); each bank and MIDI file loads, and the keys make sound', async ({ open }) => {
+  const page = await open({ width: 1440, height: 900 });
+  try {
+    const bad = []; page.on('response', (r) => { if (r.status() >= 400) bad.push(r.status() + ' ' + r.url()); });
+    let prev = null; const pianos = new Set(), songs = new Set();
+    for (let i = 0; i < 6; i++) {
+      await page.reload({ waitUntil: 'networkidle2' }); await sleep(1800);
+      const pick = await page.evaluate(() => ({ ...window.Clavier.pick, cfg: window.__audioConfig, song: window.__song }));
+      if (prev) { assert(pick.piano !== prev.piano, `reload ${i}: the same piano twice (${pick.piano})`); assert(pick.song !== prev.song, `reload ${i}: the same piece twice`); }
+      pianos.add(pick.piano); songs.add(pick.song);
+      await page.focus('textarea'); await page.keyboard.type('abc', { delay: 120 }); await sleep(300);
+      assert(await page.evaluate(() => window.Klang.context.state) === 'running', 'no sound context with ' + pick.piano);
+      prev = pick;
+    }
+    assert(pianos.size >= 3 && songs.size >= 3, 'six reloads only reached ' + pianos.size + ' pianos and ' + songs.size + ' pieces');
+    assert(bad.length === 0, 'failed requests: ' + bad.slice(0, 3).join(' | '));
+  } finally { await page.close(); }
+}, { tags: ['audio'] });
